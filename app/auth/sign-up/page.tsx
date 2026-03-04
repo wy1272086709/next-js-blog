@@ -43,6 +43,7 @@ export default function SignUpPage() {
           },
         },
       })
+      console.log('error', error)
       if (error) throw error
       router.push("/auth/sign-up-success")
     } catch (error: unknown) {
