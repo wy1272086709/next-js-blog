@@ -16,7 +16,7 @@ export function DashboardSidebar() {
   const pathname = usePathname()
 
   return (
-    <aside className="hidden md:block w-56 shrink-0">
+    <aside className="hidden md:block w-56 shrink-0 ml-[24px]">
       <nav className="sticky top-20 space-y-1">
         {sidebarItems.map((item) => {
           const Icon = item.icon

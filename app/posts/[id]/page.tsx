@@ -3,9 +3,13 @@ import { notFound } from "next/navigation"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Badge } from "@/components/ui/badge"
 import { LikeButton } from "@/components/like-button"
-import { CalendarDays, Eye } from "lucide-react"
+import { CalendarDays, Eye, MessageSquare, ThumbsUp, Reply } from "lucide-react"
 import { format } from "date-fns"
 import { zhCN } from "date-fns/locale"
+import ReactMarkdown from "react-markdown"
+import remarkGfm from "remark-gfm"
+import rehypeHighlight from "rehype-highlight"
+import { CommentSection } from "@/components/comment-section"
 
 export default async function PostPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params
@@ -22,7 +26,6 @@ export default async function PostPage({ params }: { params: Promise<{ id: strin
     )
     .eq("id", id)
     .single()
-  console.log('post:', post, 'id:', id);
   if (!post) {
     notFound()
   }
@@ -50,11 +53,17 @@ export default async function PostPage({ params }: { params: Promise<{ id: strin
     .update({ view_count: (post.view_count || 0) + 1 })
     .eq("id", id)
 
+  // 获取评论数
+  const { count: commentCount } = await supabase
+    .from("comments")
+    .select("*", { count: "exact", head: true })
+    .eq("post_id", id)
+
   const author = post.profiles as { username: string; avatar_url: string } | null
   const category = post.categories as { name: string; slug: string } | null
 
   return (
-    <article className="container max-w-4xl py-10">
+    <article className="pl-[24px] pr-[24px] py-10">
       {/* 分类标签 */}
       {category && (
         <Badge variant="secondary" className="mb-4">
@@ -82,16 +91,30 @@ export default async function PostPage({ params }: { params: Promise<{ id: strin
               <Eye className="h-4 w-4" />
               {post.view_count || 0} 次阅读
             </span>
+            <span className="flex items-center gap-1">
+              <MessageSquare className="h-4 w-4" />
+              {commentCount || 0} 条评论
+            </span>
+            <span className="flex items-center gap-1">
+              <MessageSquare className="h-4 w-4" />
+              {commentCount || 0} 条评论
+            </span>
           </div>
         </div>
         <LikeButton postId={post.id} initialLikeCount={likeCount || 0} initialHasLiked={hasLiked} />
       </div>
 
       {/* 文章内容 */}
-      <div className="prose prose-neutral dark:prose-invert max-w-none">
-        {post.content.split("\n").map((paragraph: string, index: number) => (
-          <p key={index}>{paragraph}</p>
-        ))}
+      <div className="markdown-body prose prose-neutral dark:prose-invert max-w-none">
+        <ReactMarkdown remarkPlugins={[remarkGfm]} rehypePlugins={[rehypeHighlight]}>
+          {post.content || ""}
+        </ReactMarkdown>
+      </div>
+
+      {/* 评论区 */}
+      <div className="mt-12 border-t pt-8">
+        <h2 className="text-xl font-bold mb-6">评论 ({commentCount || 0})</h2>
+        <CommentSection postId={id} />
       </div>
     </article>
   )

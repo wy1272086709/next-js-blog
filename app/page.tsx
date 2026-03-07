@@ -5,8 +5,8 @@ import { ArrowRight, Code2, Server, Bot } from "lucide-react"
 export default function HomePage() {
   return (
     <div className="flex flex-col">
-      {/* Hero Section */}
-      <section className="container py-24 md:py-32">
+      {/* Hero Section container */}
+      <section className="py-24 md:py-32">
         <div className="flex flex-col items-center text-center gap-8">
           <h1 className="text-4xl md:text-6xl font-bold tracking-tight text-balance">探索技术的无限可能</h1>
           <p className="text-xl text-muted-foreground max-w-2xl text-balance">
@@ -25,8 +25,8 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* Categories Section */}
-      <section className="container py-16 border-t">
+      {/* Categories Section container */}
+      <section className="py-16 border-t pl-[24px] pr-[24px]">
         <h2 className="text-2xl font-bold text-center mb-12">技术板块</h2>
         <div className="grid md:grid-cols-3 gap-8">
           <Link

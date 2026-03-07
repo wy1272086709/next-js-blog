@@ -34,8 +34,8 @@ export default async function PostsPage({
   }
   const { data: posts } = await query
   return (
-    <div className="container py-8">
-      <div className="flex gap-8">
+    <div className="py-8">
+      <div className="flex gap-8 ml-[24px] mr-[24px]">
         {/* 左侧分类导航 */}
         <CategorySidebar categories={categories || []} activeCategory={params.category} />
 

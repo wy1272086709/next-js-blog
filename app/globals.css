@@ -123,3 +123,55 @@
     @apply bg-background text-foreground;
   }
 }
+
+/* Markdown 区域内的代码高亮，仅作用于 .markdown-body */
+.markdown-body pre code.hljs,
+.markdown-body code.hljs {
+  display: block;
+  overflow-x: auto;
+  padding: 1rem;
+  border-radius: 0.5rem;
+  background: oklch(0.18 0 0);
+  color: oklch(0.93 0 0);
+  font-family: var(--font-mono, ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New",
+      monospace);
+  font-size: 0.875rem;
+}
+
+.markdown-body code.hljs {
+  padding: 0.25rem 0.4rem;
+}
+
+.markdown-body .hljs-comment,
+.markdown-body .hljs-quote {
+  color: oklch(0.7 0 0);
+}
+
+.markdown-body .hljs-keyword,
+.markdown-body .hljs-selector-tag,
+.markdown-body .hljs-literal,
+.markdown-body .hljs-name {
+  color: oklch(0.74 0.16 264);
+}
+
+.markdown-body .hljs-string,
+.markdown-body .hljs-title,
+.markdown-body .hljs-section,
+.markdown-body .hljs-attribute {
+  color: oklch(0.78 0.15 140);
+}
+
+.markdown-body .hljs-number,
+.markdown-body .hljs-symbol,
+.markdown-body .hljs-bullet {
+  color: oklch(0.8 0.16 40);
+}
+
+.markdown-body .hljs-meta {
+  color: oklch(0.68 0.12 260);
+}
+
+.markdown-body .hljs-built_in,
+.markdown-body .hljs-builtin-name {
+  color: oklch(0.79 0.14 210);
+}
