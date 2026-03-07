@@ -22,7 +22,7 @@ export default async function PostPage({ params }: { params: Promise<{ id: strin
     )
     .eq("id", id)
     .single()
-
+  console.log('post:', post, 'id:', id);
   if (!post) {
     notFound()
   }

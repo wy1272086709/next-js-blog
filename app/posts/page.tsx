@@ -13,7 +13,7 @@ export default async function PostsPage({
   // 获取分类
   const { data: categories } = await supabase.from("categories").select("*").order("name")
 
-  // 获取文章
+  // 获取文章（profiles、categories 需有直接 FK 关联，见 scripts/002-add-posts-profiles-fk.sql）
   let query = supabase
     .from("posts")
     .select(
@@ -26,17 +26,13 @@ export default async function PostsPage({
     )
     .eq("published", true)
     .order("created_at", { ascending: false })
-
   if (params.category) {
     const { data: category } = await supabase.from("categories").select("id").eq("slug", params.category).single()
-
     if (category) {
       query = query.eq("category_id", category.id)
     }
   }
-
   const { data: posts } = await query
-
   return (
     <div className="container py-8">
       <div className="flex gap-8">

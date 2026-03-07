@@ -24,7 +24,7 @@ CREATE TABLE posts (
   content TEXT NOT NULL,
   excerpt TEXT,
   cover_image TEXT,
-  author_id UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
+  author_id UUID NOT NULL REFERENCES profiles(id) ON DELETE CASCADE,
   category_id UUID REFERENCES categories(id) ON DELETE SET NULL,
   published BOOLEAN DEFAULT false,
   view_count INTEGER DEFAULT 0,
@@ -65,6 +65,10 @@ CREATE POLICY "用户可以删除自己的文章" ON posts FOR DELETE USING (aut
 CREATE POLICY "公开查看所有点赞" ON likes FOR SELECT USING (true);
 CREATE POLICY "登录用户可以点赞" ON likes FOR INSERT WITH CHECK (auth.uid() = user_id);
 CREATE POLICY "用户可以取消自己的点赞" ON likes FOR DELETE USING (auth.uid() = user_id);
+
+CREATE POLICY "任何人可以读取公开的用户资料"
+ON profiles FOR SELECT
+USING (true);
 
 -- 插入默认分类
 INSERT INTO categories (name, slug, description) VALUES
