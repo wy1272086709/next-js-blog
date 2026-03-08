@@ -46,108 +46,109 @@ export function CommentSection({ postId }: { postId: string }) {
   // 获取评论
   useEffect(() => {
     const fetchComments = async () => {
-        try {
-            const supabase = createClient()
-            const { data: comments, error } = await supabase
-                .from('comments')
-                .select(`
-                id,
-                content,
-                author_id,
-                post_id,
-                parent_id,
-                created_at,
-                profiles:author_id(username, avatar_url),
-                likes:comment_id(count)
-                `)
-                .eq('post_id', postId)
-                .eq('parent_id', null)
-                .order('created_at', { ascending: true })
+      try {
+        const supabase = createClient()
+        const { data: comments, error } = await supabase
+          .from('comments')
+          .select(`
+          id,
+          content,
+          author_id,
+          post_id,
+          parent_id,
+          created_at,
+          profiles:author_id(username, avatar_url)
+          `)
+          .eq('post_id', postId)
+          .eq('parent_id', null)
+          .order('created_at', { ascending: true })
 
-            if (error) {
-                setLoading(false)
-                console.error('Error fetching comments:', error)
-                return
-            }
-
-            // 获取每个评论的回复
-            const commentsWithReplies = await Promise.all(
-                comments.map(async (comment) => {
-                const { data: replies, error } = await supabase
-                    .from('comments')
-                    .select(`
-                    id,
-                    content,
-                    author_id,
-                    post_id,
-                    parent_id,
-                    created_at,
-                    profiles:author_id(username, avatar_url),
-                    likes:comment_id(count)
-                    `)
-                    .eq('parent_id', comment.id)
-                    .order('created_at', { ascending: true })
-
-                // 检查用户是否点赞
-                let userHasLiked = false
-                if (user) {
-                    const { data: like } = await supabase
-                    .from('comment_likes')
-                    .select('id')
-                    .eq('comment_id', comment.id)
-                    .eq('user_id', user.id)
-                    .single()
-                    userHasLiked = !!like
-                }
-
-                if (error) {
-                    console.error('Error fetching replies:', error)
-                    return {
-                    ...comment,
-                    likes_count: comment.likes?.length || 0,
-                    user_has_liked: userHasLiked,
-                    replies: []
-                    }
-                }
-
-                // 检查回复的点赞状态
-                const repliesWithLikeStatus = await Promise.all(
-                    replies.map(async (reply) => {
-                    let replyUserHasLiked = false
-                    if (user) {
-                        const { data: like } = await supabase
-                        .from('comment_likes')
-                        .select('id')
-                        .eq('comment_id', reply.id)
-                        .eq('user_id', user.id)
-                        .single()
-                        replyUserHasLiked = !!like
-                    }
-                    return {
-                        ...reply,
-                        likes_count: reply.likes?.length || 0,
-                        user_has_liked: replyUserHasLiked,
-                        profiles: Array.isArray(reply.profiles) ? reply.profiles[0] : reply.profiles
-                    }
-                    })
-                )
-
-                return {
-                    ...comment,
-                    likes_count: comment.likes?.length || 0,
-                    user_has_liked: userHasLiked,
-                    replies: repliesWithLikeStatus,
-                    profiles: Array.isArray(comment.profiles) ? comment.profiles[0] : comment.profiles
-                }
-                })
-            )
-
-            setComments(commentsWithReplies as Comment[])
-            setLoading(false)
-        } catch (error) {
-            console.error('Error fetching comments:', error)
-            setLoading(false)
+        if (error) {
+          setLoading(false)
+          console.error('Error fetching comments:', error)
+          return
         }
+
+        // 获取每个评论的回复和点赞数
+        const commentsWithReplies = await Promise.all(
+          comments.map(async (comment) => {
+          const { data: replies, error: repliesError } = await supabase
+            .from('comments')
+            .select(`
+            id,
+            content,
+            author_id,
+            post_id,
+            parent_id,
+            created_at,
+            profiles:author_id(username, avatar_url)
+            `)
+            .eq('parent_id', comment.id)
+            .order('created_at', { ascending: true })
+
+          if (repliesError) {
+            console.error('Error fetching replies:', repliesError)
+          }
+
+          // 获取评论的点赞数
+          const { count: likesCount } = await supabase
+            .from('comment_likes')
+            .select('*', { count: 'exact', head: true })
+            .eq('comment_id', comment.id)
+
+          let userHasLiked = false
+          if (user) {
+            const { data: like } = await supabase
+            .from('comment_likes')
+            .select('id')
+            .eq('comment_id', comment.id)
+            .eq('user_id', user.id)
+            .single()
+            userHasLiked = !!like
+          }
+
+          const repliesWithLikeStatus = await Promise.all(
+            (replies || []).map(async (reply) => {
+            const { count: replyLikesCount } = await supabase
+              .from('comment_likes')
+              .select('*', { count: 'exact', head: true })
+              .eq('comment_id', reply.id)
+
+            let replyUserHasLiked = false
+            if (user) {
+              const { data: like } = await supabase
+              .from('comment_likes')
+              .select('id')
+              .eq('comment_id', reply.id)
+              .eq('user_id', user.id)
+              .single()
+              replyUserHasLiked = !!like
+            }
+            return {
+              ...reply,
+              likes_count: replyLikesCount || 0,
+              user_has_liked: replyUserHasLiked,
+              profiles: Array.isArray(reply.profiles) ? reply.profiles[0] : reply.profiles
+            }
+            })
+          )
+
+          return {
+            ...comment,
+            likes_count: likesCount || 0,
+            user_has_liked: userHasLiked,
+            replies: repliesWithLikeStatus,
+            profiles: Array.isArray(comment.profiles) ? comment.profiles[0] : comment.profiles
+          }
+          })
+        )
+
+        setComments(commentsWithReplies as Comment[])
+        setLoading(false)
+      } catch (error) {
+        console.error('Error fetching comments:', error)
+        setLoading(false)
+      }
     }
     fetchComments()
   }, [postId, user])
