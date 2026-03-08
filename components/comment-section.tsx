@@ -369,18 +369,24 @@ export function CommentSection({ postId }: { postId: string }) {
                   <div className="flex items-center gap-4 text-sm">
                     <button
                       onClick={() => handleLikeComment(comment.id)}
-                      className="flex items-center gap-1 hover:text-blue-500 transition-colors"
+                      className={`flex items-center gap-1 transition-colors ${
+                      comment.user_has_liked
+                        ? 'text-blue-500'
+                        : 'hover:text-blue-500'
+                      }`}
                     >
-                      <ThumbsUp className="h-4 w-4" />
+                      <ThumbsUp className={`h-4 w-4 ${comment.user_has_liked ? 'fill-current' : ''}`} />
                       <span>{comment.likes_count}</span>
                     </button>
-                    <button
-                      onClick={() => setReplyingTo(replyingTo === comment.id ? null : comment.id)}
-                      className="flex items-center gap-1 hover:text-blue-500 transition-colors"
-                    >
-                      <Reply className="h-4 w-4" />
-                      <span>回复</span>
-                    </button>
+                    {user && (
+                      <button
+                        onClick={() => setReplyingTo(replyingTo === comment.id ? null : comment.id)}
+                        className="flex items-center gap-1 hover:text-blue-500 transition-colors"
+                      >
+                        <Reply className="h-4 w-4" />
+                        <span>回复</span>
+                      </button>
+                    )}
                   </div>
 
                   {/* 回复输入框 */}
@@ -445,18 +451,24 @@ export function CommentSection({ postId }: { postId: string }) {
                               <div className="flex items-center gap-4 text-xs">
                                 <button
                                   onClick={() => handleLikeComment(reply.id, true)}
-                                  className="flex items-center gap-1 hover:text-blue-500 transition-colors"
+                                  className={`flex items-center gap-1 transition-colors ${
+                                  reply.user_has_liked
+                                    ? 'text-blue-500'
+                                    : 'hover:text-blue-500'
+                                  }`}
                                 >
-                                  <ThumbsUp className="h-3 w-3" />
+                                  <ThumbsUp className={`h-3 w-3 ${reply.user_has_liked ? 'fill-current' : ''}`} />
                                   <span>{reply.likes_count}</span>
                                 </button>
-                                <button
-                                  onClick={() => setReplyingTo(replyingTo === reply.id ? null : reply.id)}
-                                  className="flex items-center gap-1 hover:text-blue-500 transition-colors"
-                                >
-                                  <Reply className="h-3 w-3" />
-                                  <span>回复</span>
-                                </button>
+                                {user && (
+                                  <button
+                                    onClick={() => setReplyingTo(replyingTo === reply.id ? null : reply.id)}
+                                    className="flex items-center gap-1 hover:text-blue-500 transition-colors"
+                                  >
+                                    <Reply className="h-3 w-3" />
+                                    <span>回复</span>
+                                  </button>
+                                )}
                               </div>
 
                               {/* 回复的回复输入框 */}
