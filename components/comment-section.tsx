@@ -60,7 +60,7 @@ export function CommentSection({ postId }: { postId: string }) {
           profiles:author_id(username, avatar_url)
           `)
           .eq('post_id', postId)
-          .eq('parent_id', null)
+          .is('parent_id', null)
           .order('created_at', { ascending: true })
 
         if (error) {
@@ -319,7 +319,7 @@ export function CommentSection({ postId }: { postId: string }) {
           <form onSubmit={handleSubmitComment} className="space-y-4">
             <div className="flex items-start gap-4">
               <Avatar className="h-10 w-10">
-                <AvatarImage src={user.user_metadata?.avatar_url || "/placeholder.svg"} />
+                <AvatarImage src={user.user_metadata?.avatar_url || "/avatar.png"} />
                 <AvatarFallback>{user.user_metadata?.username?.charAt(0).toUpperCase() || "U"}</AvatarFallback>
               </Avatar>
               <div className="flex-1">
@@ -355,7 +355,7 @@ export function CommentSection({ postId }: { postId: string }) {
             <div key={comment.id} className="border rounded-lg p-4">
               <div className="flex items-start gap-4">
                 <Avatar className="h-10 w-10">
-                  <AvatarImage src={comment.profiles?.avatar_url || "/placeholder.svg"} />
+                  <AvatarImage src={comment.profiles?.avatar_url || "/avatar.png"} />
                   <AvatarFallback>{comment.profiles?.username?.charAt(0).toUpperCase() || "U"}</AvatarFallback>
                 </Avatar>
                 <div className="flex-1 space-y-2">
@@ -388,7 +388,7 @@ export function CommentSection({ postId }: { postId: string }) {
                     <div className="mt-4 border-t pt-4">
                       <form onSubmit={handleSubmitReply} className="flex items-start gap-4">
                         <Avatar className="h-8 w-8">
-                          <AvatarImage src={user.user_metadata?.avatar_url || "/placeholder.svg"} />
+                          <AvatarImage src={user.user_metadata?.avatar_url || "/avatar.png"} />
                           <AvatarFallback>{user.user_metadata?.username?.charAt(0).toUpperCase() || "U"}</AvatarFallback>
                         </Avatar>
                         <div className="flex-1">
@@ -431,7 +431,7 @@ export function CommentSection({ postId }: { postId: string }) {
                         <div key={reply.id} className="space-y-2">
                           <div className="flex items-start gap-3">
                             <Avatar className="h-8 w-8">
-                              <AvatarImage src={reply.profiles?.avatar_url || "/placeholder.svg"} />
+                              <AvatarImage src={reply.profiles?.avatar_url || "/avatar.png"} />
                               <AvatarFallback>{reply.profiles?.username?.charAt(0).toUpperCase() || "U"}</AvatarFallback>
                             </Avatar>
                             <div className="flex-1 space-y-1">
@@ -464,7 +464,7 @@ export function CommentSection({ postId }: { postId: string }) {
                                 <div className="mt-3 border-t pt-3">
                                   <form onSubmit={handleSubmitReply} className="flex items-start gap-3">
                                     <Avatar className="h-6 w-6">
-                                      <AvatarImage src={user.user_metadata?.avatar_url || "/placeholder.svg"} />
+                                      <AvatarImage src={user.user_metadata?.avatar_url || "/avatar.png"} />
                                       <AvatarFallback>{user.user_metadata?.username?.charAt(0).toUpperCase() || "U"}</AvatarFallback>
                                     </Avatar>
                                     <div className="flex-1">

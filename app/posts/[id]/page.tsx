@@ -77,7 +77,7 @@ export default async function PostPage({ params }: { params: Promise<{ id: strin
       {/* 作者信息和元数据 */}
       <div className="flex items-center gap-4 mb-8 pb-8 border-b">
         <Avatar className="h-10 w-10">
-          <AvatarImage src={author?.avatar_url || "/placeholder.svg"} />
+          <AvatarImage src={author?.avatar_url || "/avatar.png"} />
           <AvatarFallback>{author?.username?.charAt(0).toUpperCase()}</AvatarFallback>
         </Avatar>
         <div className="flex-1">

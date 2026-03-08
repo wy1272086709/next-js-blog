@@ -45,7 +45,7 @@ export function PostCard({ post }: PostCardProps) {
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
               <Avatar className="h-6 w-6">
-                <AvatarImage src={author?.avatar_url || "/placeholder.svg"} />
+                <AvatarImage src={author?.avatar_url || "/avatar.png"} />
                 <AvatarFallback>{author?.username?.charAt(0).toUpperCase()}</AvatarFallback>
               </Avatar>
               <span className="text-sm text-muted-foreground">{author?.username || "匿名用户"}</span>
