@@ -1,7 +1,6 @@
 "use client"
 
 import type React from "react"
-
 import { createClient } from "@/lib/supabase/client"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
@@ -33,6 +32,10 @@ export default function LoginPage() {
       router.push("/dashboard")
       router.refresh()
     } catch (error: unknown) {
+      if ((error as any).code === "invalid_credentials") {
+        setError("邮箱或密码错误")
+        return
+      }
       setError(error instanceof Error ? error.message : "登录失败")
     } finally {
       setIsLoading(false)
