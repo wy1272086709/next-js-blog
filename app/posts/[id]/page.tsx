@@ -1,5 +1,5 @@
 import { createClient } from "@/lib/supabase/server"
-import { initRedis } from "@/lib/redis"
+import { redis } from "@/lib/redis"
 import { notFound } from "next/navigation"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Badge } from "@/components/ui/badge"
@@ -15,7 +15,6 @@ import { CommentSection } from "@/components/comment-section"
 
 export default async function PostPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params
-  const redis = await initRedis();
   const supabase = await createClient()
 
   const { data: post } = await supabase
@@ -65,7 +64,7 @@ export default async function PostPage({ params }: { params: Promise<{ id: strin
     // 先从 Redis 获取用户点赞状态
     const cachedLikeStatus = await redis.exists(userLikeKey)
     
-    if (cachedLikeStatus > 0) {
+    if (cachedLikeStatus) {
       hasLiked = true
     } else {
       // Redis 未命中，从数据库查询

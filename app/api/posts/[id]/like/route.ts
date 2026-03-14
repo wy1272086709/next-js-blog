@@ -124,7 +124,7 @@ export async function GET(
     if (user) {
       const userLikeKey = `post:${postId}:user:${user.id}:liked`
       // 使用 Redis 缓存用户点赞状态
-      hasLiked = (await redis.exists(userLikeKey)) > 0
+      hasLiked = !!(await redis.exists(userLikeKey))
     }
 
     return NextResponse.json({
