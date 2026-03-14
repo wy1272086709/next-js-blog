@@ -1,11 +1,11 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useOptimistic, useTransition } from "react"
 import { Button } from "@/components/ui/button"
 import { Heart } from "lucide-react"
-import { createClient } from "@/lib/supabase/client"
 import { useRouter } from "next/navigation"
 import { cn } from "@/lib/utils"
+import { useToast } from "@/hooks/use-toast"
 
 export function LikeButton({
   postId,
@@ -16,48 +16,83 @@ export function LikeButton({
   initialLikeCount: number
   initialHasLiked: boolean
 }) {
-  const [likeCount, setLikeCount] = useState(initialLikeCount)
-  const [hasLiked, setHasLiked] = useState(initialHasLiked)
-  const [isLoading, setIsLoading] = useState(false)
   const router = useRouter()
+  const { toast } = useToast()
+  const [isPending, startTransition] = useTransition()
 
-  const handleLike = async () => {
-    const supabase = createClient()
+  // 使用 useOptimistic 实现乐观更新
+  const [optimisticState, setOptimisticState] = useOptimistic(
+    { count: initialLikeCount, liked: initialHasLiked },
+    (state, action: { count: number; liked: boolean }) => action
+  )
 
-    const {
-      data: { user },
-    } = await supabase.auth.getUser()
+  const handleLike = () => {
+    startTransition(async () => {
+      try {
+        // 立即更新 UI（乐观更新）
+        const newState = {
+          count: optimisticState.liked ? optimisticState.count - 1 : optimisticState.count + 1,
+          liked: !optimisticState.liked,
+        }
+        setOptimisticState(newState)
 
-    if (!user) {
-      router.push("/auth/login")
-      return
-    }
+        // 调用服务端 API
+        const response = await fetch(`/api/posts/${postId}/like`, {
+          method: "POST",
+        })
 
-    setIsLoading(true)
+        if (response.status === 401) {
+          // 用户未登录，重置乐观状态
+          setOptimisticState({ count: initialLikeCount, liked: initialHasLiked })
+          router.push("/auth/login")
+          return
+        }
 
-    try {
-      if (hasLiked) {
-        await supabase.from("likes").delete().eq("post_id", postId).eq("user_id", user.id)
+        if (!response.ok) {
+          // 服务器错误，重置乐观状态
+          const error = await response.json()
+          setOptimisticState({ count: initialLikeCount, liked: initialHasLiked })
+          toast({
+            title: "错误",
+            description: error.error || "操作失败",
+            variant: "destructive",
+          })
+          return
+        }
 
-        setLikeCount((prev) => prev - 1)
-        setHasLiked(false)
-      } else {
-        await supabase.from("likes").insert({ post_id: postId, user_id: user.id })
+        const data = await response.json()
 
-        setLikeCount((prev) => prev + 1)
-        setHasLiked(true)
+        // 使用服务器返回的真实数据更新状态
+        setOptimisticState({ count: data.count, liked: data.liked })
+
+        // 显示成功提示
+        toast({
+          title: data.liked ? "已点赞" : "已取消点赞",
+          duration: 2000,
+        })
+      } catch (error) {
+        // 网络错误，重置乐观状态
+        console.error("点赞失败:", error)
+        setOptimisticState({ count: initialLikeCount, liked: initialHasLiked })
+        toast({
+          title: "错误",
+          description: "网络错误，请稍后重试",
+          variant: "destructive",
+        })
       }
-    } catch (error) {
-      console.error("点赞失败:", error)
-    } finally {
-      setIsLoading(false)
-    }
+    })
   }
 
   return (
-    <Button variant="outline" size="sm" onClick={handleLike} disabled={isLoading} className="gap-2 bg-transparent">
-      <Heart className={cn("h-4 w-4", hasLiked && "fill-red-500 text-red-500")} />
-      {likeCount}
+    <Button
+      variant="outline"
+      size="sm"
+      onClick={handleLike}
+      disabled={isPending}
+      className="gap-2 bg-transparent"
+    >
+      <Heart className={cn("h-4 w-4", optimisticState.liked && "fill-red-500 text-red-500")} />
+      {optimisticState.count}
     </Button>
   )
 }

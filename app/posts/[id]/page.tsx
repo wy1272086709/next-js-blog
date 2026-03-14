@@ -1,4 +1,5 @@
 import { createClient } from "@/lib/supabase/server"
+import { initRedis } from "@/lib/redis"
 import { notFound } from "next/navigation"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Badge } from "@/components/ui/badge"
@@ -11,8 +12,10 @@ import remarkGfm from "remark-gfm"
 import rehypeHighlight from "rehype-highlight"
 import { CommentSection } from "@/components/comment-section"
 
+
 export default async function PostPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params
+  const redis = await initRedis();
   const supabase = await createClient()
 
   const { data: post } = await supabase
@@ -30,21 +33,56 @@ export default async function PostPage({ params }: { params: Promise<{ id: strin
     notFound()
   }
 
-  // 获取点赞数
-  const { count: likeCount } = await supabase
-    .from("likes")
-    .select("*", { count: "exact", head: true })
-    .eq("post_id", id)
+  // 优化：使用 Redis 缓存获取点赞数
+  const likeKey = `post:${id}:likes`
+  let likeCount: number | null = null
+  
+  // 先从 Redis 获取
+  const cachedCount = await redis.get(likeKey)
+  if (cachedCount !== null) {
+    likeCount = parseInt(cachedCount)
+  } else {
+    // Redis 未命中，从数据库查询
+    const { count } = await supabase
+      .from("likes")
+      .select("*", { count: "exact", head: true })
+      .eq("post_id", id)
+    
+    likeCount = count || 0
+    // 缓存到 Redis，24小时过期
+    await redis.set(likeKey, String(likeCount), { EX: 86400 })
+  }
 
   // 获取当前用户是否点赞
   const {
     data: { user },
   } = await supabase.auth.getUser()
+  
   let hasLiked = false
   if (user) {
-    const { data: like } = await supabase.from("likes").select("id").eq("post_id", id).eq("user_id", user.id).single()
-
-    hasLiked = !!like
+    const userLikeKey = `post:${id}:user:${user.id}:liked`
+    
+    // 先从 Redis 获取用户点赞状态
+    const cachedLikeStatus = await redis.exists(userLikeKey)
+    
+    if (cachedLikeStatus > 0) {
+      hasLiked = true
+    } else {
+      // Redis 未命中，从数据库查询
+      const { data: like } = await supabase
+        .from("likes")
+        .select("id")
+        .eq("post_id", id)
+        .eq("user_id", user.id)
+        .single()
+      
+      hasLiked = !!like
+      
+      // 如果用户已点赞，缓存这个状态（30天过期）
+      if (hasLiked) {
+        await redis.set(userLikeKey, "1", { EX: 86400 * 30 })
+      }
+    }
   }
 
   // 更新浏览量
@@ -90,10 +128,6 @@ export default async function PostPage({ params }: { params: Promise<{ id: strin
             <span className="flex items-center gap-1">
               <Eye className="h-4 w-4" />
               {post.view_count || 0} 次阅读
-            </span>
-            <span className="flex items-center gap-1">
-              <MessageSquare className="h-4 w-4" />
-              {commentCount || 0} 条评论
             </span>
             <span className="flex items-center gap-1">
               <MessageSquare className="h-4 w-4" />
