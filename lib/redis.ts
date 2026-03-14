@@ -106,6 +106,11 @@ class RedisClient {
     return client.incr(key);
   }
 
+  async decr(key: string): Promise<number> {
+    const client = await this.getClient();
+    return client.decr(key);
+  }
+
   async lpush(key: string, ...values: any[]): Promise<number> {
     const client = await this.getClient();
     const stringValues = values.map(v => typeof v === 'string' ? v : JSON.stringify(v));
@@ -117,7 +122,11 @@ class RedisClient {
     return client.rPop(key);
   }
 
-  // 其他常用方法可继续扩展...
+  async commonOperation(key: string, operation: string, ...args: any[]): Promise<any> {
+    const client = await this.getClient();
+    const method = operation as keyof RedisClientType<any>
+    return ((client as any)[method])(key, ...args);
+  }
 }
 
 // 导出单例
