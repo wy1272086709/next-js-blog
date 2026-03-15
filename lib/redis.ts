@@ -45,6 +45,7 @@ class RedisClient {
 
     if (!this.isConnected) {
       await this.client.connect();
+      this.isConnected = true;
     }
 
     return this.client;
@@ -63,11 +64,12 @@ class RedisClient {
 
   // ---------- 常用操作封装 ----------
 
-  async set(key: string, value: any, options?: { ex?: number }): Promise<void> {
+  async set(key: string, value: any, options?: { ex?: number; EX?: number }): Promise<void> {
     const client = await this.getClient();
     const stringValue = typeof value === 'string' ? value : JSON.stringify(value);
-    if (options?.ex) {
-      await client.setEx(key, options.ex, stringValue);
+    const seconds = options?.ex ?? options?.EX;
+    if (seconds != null) {
+      await client.setEx(key, seconds, stringValue);
     } else {
       await client.set(key, stringValue);
     }

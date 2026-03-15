@@ -13,88 +13,100 @@ import rehypeHighlight from "rehype-highlight"
 import { CommentSection } from "@/components/comment-section"
 
 
+// Redis 调用带超时，避免连接异常时长时间阻塞（如 Redis 不可用）
+const REDIS_TIMEOUT_MS = 3000
+
+async function withRedisTimeout<T>(fn: () => Promise<T>): Promise<T | null> {
+  try {
+    return await Promise.race([
+      fn(),
+      new Promise<null>((_, reject) =>
+        setTimeout(() => reject(new Error("Redis timeout")), REDIS_TIMEOUT_MS)
+      ),
+    ])
+  } catch {
+    return null
+  }
+}
+
 export default async function PostPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params
   const supabase = await createClient()
 
-  const { data: post } = await supabase
-    .from("posts")
-    .select(
-      `
+  // 第一轮并行：文章、点赞数缓存、当前用户
+  const likeKey = `post:${id}:likes`
+  const [postResult, cachedCount, authResult] = await Promise.all([
+    supabase
+      .from("posts")
+      .select(
+        `
       *,
       profiles:author_id(username, avatar_url),
       categories:category_id(name, slug)
     `,
-    )
-    .eq("id", id)
-    .single()
+      )
+      .eq("id", id)
+      .single(),
+    withRedisTimeout(() => redis.get(likeKey)),
+    supabase.auth.getUser(),
+  ])
+
+  const { data: post } = postResult
   if (!post) {
     notFound()
   }
 
-  // 优化：使用 Redis 缓存获取点赞数
-  const likeKey = `post:${id}:likes`
-  let likeCount: number | null = null
-  
-  // 先从 Redis 获取
-  const cachedCount = await redis.get(likeKey)
-  if (cachedCount !== null) {
-    likeCount = parseInt(cachedCount)
+  const { data: { user } } = authResult
+
+  // 解析点赞数：有缓存用缓存，否则查库并回写缓存（带超时降级）
+  let likeCount: number
+  if (cachedCount !== null && cachedCount !== undefined) {
+    likeCount = typeof cachedCount === "string" ? parseInt(cachedCount, 10) : Number(cachedCount)
   } else {
-    // Redis 未命中，从数据库查询
     const { count } = await supabase
       .from("likes")
       .select("*", { count: "exact", head: true })
       .eq("post_id", id)
-    
-    likeCount = count || 0
-    // 缓存到 Redis，24小时过期
-    await redis.set(likeKey, String(likeCount), { EX: 86400 })
+    likeCount = count ?? 0
+    withRedisTimeout(() => redis.set(likeKey, String(likeCount), { ex: 86400 })).catch(() => {})
   }
 
-  // 获取当前用户是否点赞
-  const {
-    data: { user },
-  } = await supabase.auth.getUser()
-  
+  // 用户点赞状态（仅登录用户）+ 浏览量更新 + 评论数 并行
   let hasLiked = false
-  if (user) {
-    const userLikeKey = `post:${id}:user:${user.id}:liked`
-    
-    // 先从 Redis 获取用户点赞状态
-    const cachedLikeStatus = await redis.exists(userLikeKey)
-    
-    if (cachedLikeStatus) {
+  const userLikeKey = user ? `post:${id}:user:${user.id}:liked` : null
+
+  const [cachedLikeStatus, _view, commentResult] = await Promise.all([
+    userLikeKey
+      ? withRedisTimeout(() => redis.exists(userLikeKey))
+      : Promise.resolve(null),
+    supabase
+      .from("posts")
+      .update({ view_count: (post.view_count || 0) + 1 })
+      .eq("id", id),
+    supabase
+      .from("comments")
+      .select("*", { count: "exact", head: true })
+      .eq("post_id", id),
+  ])
+
+  if (user && userLikeKey) {
+    if (cachedLikeStatus === true) {
       hasLiked = true
     } else {
-      // Redis 未命中，从数据库查询
       const { data: like } = await supabase
         .from("likes")
         .select("id")
         .eq("post_id", id)
         .eq("user_id", user.id)
         .single()
-      
       hasLiked = !!like
-      
-      // 如果用户已点赞，缓存这个状态（30天过期）
       if (hasLiked) {
-        await redis.set(userLikeKey, "1", { EX: 86400 * 30 })
+        withRedisTimeout(() => redis.set(userLikeKey, "1", { ex: 86400 * 30 })).catch(() => {})
       }
     }
   }
 
-  // 更新浏览量
-  await supabase
-    .from("posts")
-    .update({ view_count: (post.view_count || 0) + 1 })
-    .eq("id", id)
-
-  // 获取评论数
-  const { count: commentCount } = await supabase
-    .from("comments")
-    .select("*", { count: "exact", head: true })
-    .eq("post_id", id)
+  const { count: commentCount } = commentResult
 
   const author = post.profiles as { username: string; avatar_url: string } | null
   const category = post.categories as { name: string; slug: string } | null

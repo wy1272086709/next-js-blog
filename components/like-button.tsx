@@ -7,8 +7,9 @@ import { useRouter } from "next/navigation"
 import { cn } from "@/lib/utils"
 import { useToast } from "@/hooks/use-toast"
 import { createClient } from "@/lib/supabase/client"
+import type { User } from "@supabase/supabase-js"
 
-export async function LikeButton({
+export function LikeButton({
   postId,
   initialLikeCount,
   initialHasLiked,
@@ -17,10 +18,7 @@ export async function LikeButton({
   initialLikeCount: number
   initialHasLiked: boolean
 }) {
-  const supabase = await createClient()
-  const {
-    data: { user },
-  } = await supabase.auth.getUser()
+  const [user, setUser] = useState<User | null>(null)
   const router = useRouter()
   const { toast } = useToast()
   const [isPending, startTransition] = useTransition()
@@ -36,6 +34,12 @@ export async function LikeButton({
     likeState,
     (state, newState: typeof likeState) => newState
   )
+
+  // 客户端获取当前用户（用于未登录时跳转登录页）
+  useEffect(() => {
+    const supabase = createClient()
+    supabase.auth.getUser().then(({ data: { user: u } }) => setUser(u))
+  }, [])
 
   // 如果 props 更新（例如父组件重新获取数据），同步实际状态（可选）
   useEffect(() => {
