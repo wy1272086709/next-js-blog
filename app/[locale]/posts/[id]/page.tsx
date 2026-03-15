@@ -16,6 +16,8 @@ import { CommentSection } from "@/components/comment-section"
 import { routing } from "@/i18n/routing"
 
 const REDIS_TIMEOUT_MS = 3000
+// 强制动态渲染
+export const dynamic = 'force-dynamic'
 
 async function withRedisTimeout<T>(fn: () => Promise<T>): Promise<T | null> {
   try {
@@ -42,7 +44,8 @@ export default async function PostPage({ params }: Props) {
   const t = await getTranslations("PostDetail")
   const dateLocale = locale === "zh-CN" ? zhCN : enUS
   const dateFormat = locale === "zh-CN" ? "yyyy年M月d日" : "MMM d, yyyy"
-
+  // 使用了依赖动态 API（如 cookies）的 Supabase 服务端客户端
+  // 
   const supabase = await createClient()
   const likeKey = `post:${id}:likes`
   const [postResult, cachedCount, authResult] = await Promise.all([
