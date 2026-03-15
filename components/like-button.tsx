@@ -6,8 +6,9 @@ import { Heart } from "lucide-react"
 import { useRouter } from "next/navigation"
 import { cn } from "@/lib/utils"
 import { useToast } from "@/hooks/use-toast"
+import { createClient } from "@/lib/supabase/client"
 
-export function LikeButton({
+export async function LikeButton({
   postId,
   initialLikeCount,
   initialHasLiked,
@@ -16,10 +17,14 @@ export function LikeButton({
   initialLikeCount: number
   initialHasLiked: boolean
 }) {
+  const supabase = await createClient()
+  const {
+    data: { user },
+  } = await supabase.auth.getUser()
   const router = useRouter()
   const { toast } = useToast()
   const [isPending, startTransition] = useTransition()
-
+  
   // 实际状态：从 props 初始化，后续由服务器响应更新
   const [likeState, setLikeState] = useState({
     count: initialLikeCount,
@@ -38,6 +43,11 @@ export function LikeButton({
   }, [initialLikeCount, initialHasLiked])
 
   const handleLike = () => {
+    // 未登陆，则跳转至登录页
+    if (!user) {
+      router.push("/auth/login")
+      return
+    }
     startTransition(async () => {
       // 计算乐观更新的目标值（基于当前实际状态）
       const optimisticNew = {
