@@ -6,9 +6,9 @@ import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import Link from "next/link"
-import { useRouter } from "next/navigation"
 import { useState } from "react"
+import { useTranslations } from "next-intl"
+import { Link, useRouter } from "@/i18n/navigation"
 
 export default function LoginPage() {
   const [email, setEmail] = useState("")
@@ -16,27 +16,24 @@ export default function LoginPage() {
   const [error, setError] = useState<string | null>(null)
   const [isLoading, setIsLoading] = useState(false)
   const router = useRouter()
+  const t = useTranslations("Auth")
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault()
     const supabase = createClient()
     setIsLoading(true)
     setError(null)
-
     try {
-      const { error } = await supabase.auth.signInWithPassword({
-        email,
-        password,
-      })
+      const { error } = await supabase.auth.signInWithPassword({ email, password })
       if (error) throw error
       router.push("/dashboard")
       router.refresh()
-    } catch (error: unknown) {
-      if ((error as any).code === "invalid_credentials") {
-        setError("邮箱或密码错误")
+    } catch (err: unknown) {
+      if ((err as { code?: string })?.code === "invalid_credentials") {
+        setError(t("invalidCredentials"))
         return
       }
-      setError(error instanceof Error ? error.message : "登录失败")
+      setError(err instanceof Error ? err.message : t("loginError"))
     } finally {
       setIsLoading(false)
     }
@@ -47,14 +44,14 @@ export default function LoginPage() {
       <div className="w-full max-w-sm">
         <Card>
           <CardHeader className="text-center">
-            <CardTitle className="text-2xl">登录</CardTitle>
-            <CardDescription>输入您的邮箱和密码登录账户</CardDescription>
+            <CardTitle className="text-2xl">{t("login")}</CardTitle>
+            <CardDescription>{t("loginDesc")}</CardDescription>
           </CardHeader>
           <CardContent>
             <form onSubmit={handleLogin}>
               <div className="flex flex-col gap-4">
                 <div className="grid gap-2">
-                  <Label htmlFor="email">邮箱</Label>
+                  <Label htmlFor="email">{t("email")}</Label>
                   <Input
                     id="email"
                     type="email"
@@ -65,7 +62,7 @@ export default function LoginPage() {
                   />
                 </div>
                 <div className="grid gap-2">
-                  <Label htmlFor="password">密码</Label>
+                  <Label htmlFor="password">{t("password")}</Label>
                   <Input
                     id="password"
                     type="password"
@@ -76,13 +73,13 @@ export default function LoginPage() {
                 </div>
                 {error && <p className="text-sm text-destructive">{error}</p>}
                 <Button type="submit" className="w-full" disabled={isLoading}>
-                  {isLoading ? "登录中..." : "登录"}
+                  {isLoading ? t("loggingIn") : t("login")}
                 </Button>
               </div>
               <div className="mt-4 text-center text-sm">
-                还没有账户？{" "}
+                {t("noAccount")}{" "}
                 <Link href="/auth/sign-up" className="underline underline-offset-4 hover:text-primary">
-                  立即注册
+                  {t("signUpNow")}
                 </Link>
               </div>
             </form>

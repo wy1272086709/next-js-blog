@@ -16,10 +16,12 @@ import {
 import { Trash2 } from "lucide-react"
 import { createClient } from "@/lib/supabase/client"
 import { useRouter } from "next/navigation"
+import { useTranslations } from "next-intl"
 
 export function DeletePostButton({ postId }: { postId: string }) {
   const [isLoading, setIsLoading] = useState(false)
   const router = useRouter()
+  const t = useTranslations("DeletePostButton")
 
   const handleDelete = async () => {
     setIsLoading(true)
@@ -40,22 +42,22 @@ export function DeletePostButton({ postId }: { postId: string }) {
       <AlertDialogTrigger asChild>
         <Button variant="ghost" size="icon" className="text-destructive hover:text-destructive">
           <Trash2 className="h-4 w-4" />
-          <span className="sr-only">删除</span>
+          <span className="sr-only">{t("delete")}</span>
         </Button>
       </AlertDialogTrigger>
       <AlertDialogContent>
         <AlertDialogHeader>
-          <AlertDialogTitle>确认删除？</AlertDialogTitle>
-          <AlertDialogDescription>此操作无法撤销，文章将被永久删除。</AlertDialogDescription>
+          <AlertDialogTitle>{t("confirmTitle")}</AlertDialogTitle>
+          <AlertDialogDescription>{t("confirmDesc")}</AlertDialogDescription>
         </AlertDialogHeader>
         <AlertDialogFooter>
-          <AlertDialogCancel>取消</AlertDialogCancel>
+          <AlertDialogCancel>{t("cancel")}</AlertDialogCancel>
           <AlertDialogAction
             onClick={handleDelete}
             disabled={isLoading}
             className="bg-destructive text-white hover:bg-destructive/90"
           >
-            {isLoading ? "删除中..." : "确认删除"}
+            {isLoading ? t("deleting") : t("confirmDelete")}
           </AlertDialogAction>
         </AlertDialogFooter>
       </AlertDialogContent>

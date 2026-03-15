@@ -1,0 +1,159 @@
+{
+  "metadata": {
+    "title": "技术博客 - 探索技术的无限可能",
+    "description": "一个专注于前端、后端和人工智能的技术博客平台"
+  },
+  "Header": {
+    "siteName": "技术博客",
+    "posts": "文章",
+    "dashboard": "个人中心",
+    "login": "登录",
+    "signUp": "注册"
+  },
+  "HomePage": {
+    "title": "探索技术的无限可能",
+    "subtitle": "一个专注于前端、后端和人工智能的技术博客平台。 分享知识，记录成长，与志同道合的开发者一起进步。",
+    "browsePosts": "浏览文章",
+    "startWriting": "开始写作",
+    "categoriesTitle": "技术板块",
+    "frontend": "前端开发",
+    "frontendDesc": "React、Vue、Next.js、CSS、TypeScript 等前端技术文章",
+    "backend": "后端开发",
+    "backendDesc": "Node.js、Python、Go、数据库、微服务等后端技术文章",
+    "ai": "人工智能",
+    "aiDesc": "机器学习、深度学习、LLM、AI 应用开发等前沿技术"
+  },
+  "PostsPage": {
+    "allPosts": "全部文章",
+    "noPosts": "暂无文章"
+  },
+  "PostDetail": {
+    "anonymousUser": "匿名用户",
+    "reads": "次阅读",
+    "commentsCount": "条评论",
+    "commentsTitle": "评论"
+  },
+  "Auth": {
+    "login": "登录",
+    "loginDesc": "输入您的邮箱和密码登录账户",
+    "email": "邮箱",
+    "password": "密码",
+    "loggingIn": "登录中...",
+    "loginError": "登录失败",
+    "invalidCredentials": "邮箱或密码错误",
+    "noAccount": "还没有账户？",
+    "signUpNow": "立即注册",
+    "signUp": "注册",
+    "signUpDesc": "创建您的账户开始写作",
+    "username": "用户名",
+    "usernamePlaceholder": "您的用户名",
+    "confirmPassword": "确认密码",
+    "passwordMismatch": "两次输入的密码不一致",
+    "signUpError": "注册失败",
+    "signingUp": "注册中...",
+    "hasAccount": "已有账户？",
+    "signInNow": "立即登录",
+    "signUpSuccess": "注册成功！",
+    "checkEmail": "请查收您的邮箱确认账户",
+    "emailSent": "我们已向您的邮箱发送了一封确认邮件，请点击邮件中的链接激活您的账户。",
+    "backToLogin": "返回登录"
+  },
+  "Dashboard": {
+    "overview": "概览",
+    "myPosts": "我的文章",
+    "writePost": "写文章",
+    "settings": "设置",
+    "welcomeBack": "欢迎回来，{name}",
+    "overviewDesc": "这是您的创作数据概览",
+    "postCount": "文章总数",
+    "totalViews": "总阅读量",
+    "totalLikes": "获得点赞",
+    "avgViews": "平均阅读",
+    "recentPosts": "最近发布",
+    "noPostsYet": "您还没有发布任何文章",
+    "startFirstPost": "点击左侧「写文章」开始您的第一篇创作",
+    "myPostsTitle": "我的文章",
+    "myPostsDesc": "管理您发布的所有文章",
+    "draft": "草稿",
+    "edit": "编辑",
+    "noMyPosts": "您还没有发布任何文章",
+    "writeFirstPost": "写第一篇文章",
+    "accountSettings": "账户设置",
+    "settingsDesc": "管理您的个人资料",
+    "writeTitle": "写文章",
+    "editPost": "编辑文章",
+    "writeDesc": "分享您的知识和经验",
+    "editDesc": "修改您的文章内容"
+  },
+  "CategorySidebar": {
+    "allPosts": "全部文章"
+  },
+  "PostCard": {
+    "anonymousUser": "匿名用户"
+  },
+  "UserNav": {
+    "dashboard": "个人中心",
+    "writePost": "写文章",
+    "signOut": "退出登录"
+  },
+  "CommentSection": {
+    "loading": "加载评论中...",
+    "postComment": "发表评论",
+    "placeholder": "写下你的评论...",
+    "publish": "发布评论",
+    "loginToComment": "请",
+    "login": "登录",
+    "afterLogin": "后发表评论",
+    "reply": "回复",
+    "cancelReply": "取消回复",
+    "replyTo": "回复 {name}...",
+    "user": "用户",
+    "noComments": "暂无评论，快来发表第一条评论吧！",
+    "anonymousUser": "匿名用户"
+  },
+  "LikeButton": {
+    "error": "错误",
+    "operationFailed": "操作失败",
+    "liked": "已点赞",
+    "unliked": "已取消点赞",
+    "networkError": "网络错误，请稍后重试"
+  },
+  "DeletePostButton": {
+    "delete": "删除",
+    "confirmTitle": "确认删除？",
+    "confirmDesc": "此操作无法撤销，文章将被永久删除。",
+    "cancel": "取消",
+    "deleting": "删除中...",
+    "confirmDelete": "确认删除"
+  },
+  "ProfileForm": {
+    "title": "个人资料",
+    "email": "邮箱",
+    "emailReadonly": "邮箱不可修改",
+    "username": "用户名",
+    "usernamePlaceholder": "输入您的用户名",
+    "bio": "个人简介",
+    "bioPlaceholder": "介绍一下自己...",
+    "saved": "资料已更新",
+    "updateFailed": "更新失败",
+    "saving": "保存中...",
+    "saveChanges": "保存更改"
+  },
+  "WritePostForm": {
+    "title": "标题",
+    "titlePlaceholder": "输入文章标题",
+    "category": "分类",
+    "categoryPlaceholder": "选择分类",
+    "excerpt": "摘要（可选）",
+    "excerptPlaceholder": "输入文章摘要，留空将自动截取正文前150字",
+    "content": "正文",
+    "contentPlaceholder": "输入文章内容...",
+    "publishNow": "立即发布",
+    "saveDraft": "保存为草稿",
+    "saveFailed": "保存失败",
+    "saving": "保存中...",
+    "updatePost": "更新文章",
+    "publishPost": "发布文章",
+    "cancel": "取消"
+  }
+}

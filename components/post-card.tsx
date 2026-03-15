@@ -1,10 +1,13 @@
-import Link from "next/link"
+"use client"
+
+import { Link } from "@/i18n/navigation"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Badge } from "@/components/ui/badge"
 import { Heart, Eye } from "lucide-react"
 import { format } from "date-fns"
-import { zhCN } from "date-fns/locale"
+import { zhCN, enUS } from "date-fns/locale"
+import { useLocale, useTranslations } from "next-intl"
 
 interface PostCardProps {
   post: {
@@ -21,6 +24,10 @@ interface PostCardProps {
 }
 
 export function PostCard({ post }: PostCardProps) {
+  const locale = useLocale()
+  const t = useTranslations("PostCard")
+  const dateLocale = locale === "zh-CN" ? zhCN : enUS
+  const dateFormat = locale === "zh-CN" ? "M月d日" : "MMM d"
   const author = post.profiles
   const category = post.categories
   const likeCount = post.likes?.[0]?.count || 0
@@ -41,17 +48,25 @@ export function PostCard({ post }: PostCardProps) {
           </div>
         </CardHeader>
         <CardContent>
-          <p className="text-muted-foreground line-clamp-2 mb-4">{post.excerpt || post.content.substring(0, 150)}</p>
+          <p className="text-muted-foreground line-clamp-2 mb-4">
+            {post.excerpt || post.content.substring(0, 150)}
+          </p>
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
               <Avatar className="h-6 w-6">
                 <AvatarImage src={author?.avatar_url || "/avatar.png"} />
-                <AvatarFallback>{author?.username?.charAt(0).toUpperCase()}</AvatarFallback>
+                <AvatarFallback>
+                  {author?.username?.charAt(0).toUpperCase()}
+                </AvatarFallback>
               </Avatar>
-              <span className="text-sm text-muted-foreground">{author?.username || "匿名用户"}</span>
+              <span className="text-sm text-muted-foreground">
+                {author?.username || t("anonymousUser")}
+              </span>
               <span className="text-sm text-muted-foreground">·</span>
               <span className="text-sm text-muted-foreground">
-                {format(new Date(post.created_at), "M月d日", { locale: zhCN })}
+                {format(new Date(post.created_at), dateFormat, {
+                  locale: dateLocale,
+                })}
               </span>
             </div>
             <div className="flex items-center gap-4 text-sm text-muted-foreground">

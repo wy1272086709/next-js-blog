@@ -1,10 +1,10 @@
 "use client"
 
 import type React from "react"
-
-import Link from "next/link"
+import { Link } from "@/i18n/navigation"
 import { cn } from "@/lib/utils"
 import { Code2, Server, Bot, LayoutGrid } from "lucide-react"
+import { useTranslations } from "next-intl"
 
 interface Category {
   id: string
@@ -25,6 +25,8 @@ export function CategorySidebar({
   categories: Category[]
   activeCategory?: string
 }) {
+  const t = useTranslations("CategorySidebar")
+
   return (
     <aside className="hidden md:block w-56 shrink-0">
       <nav className="sticky top-20 space-y-1">
@@ -32,11 +34,13 @@ export function CategorySidebar({
           href="/posts"
           className={cn(
             "flex items-center gap-3 px-3 py-2 rounded-lg text-sm transition-colors",
-            !activeCategory ? "bg-primary text-primary-foreground" : "hover:bg-muted text-muted-foreground",
+            !activeCategory
+              ? "bg-primary text-primary-foreground"
+              : "hover:bg-muted text-muted-foreground"
           )}
         >
           <LayoutGrid className="h-4 w-4" />
-          全部文章
+          {t("allPosts")}
         </Link>
         {categories.map((category) => (
           <Link
@@ -46,7 +50,7 @@ export function CategorySidebar({
               "flex items-center gap-3 px-3 py-2 rounded-lg text-sm transition-colors",
               activeCategory === category.slug
                 ? "bg-primary text-primary-foreground"
-                : "hover:bg-muted text-muted-foreground",
+                : "hover:bg-muted text-muted-foreground"
             )}
           >
             {categoryIcons[category.slug] || <LayoutGrid className="h-4 w-4" />}

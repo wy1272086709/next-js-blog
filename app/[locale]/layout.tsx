@@ -1,0 +1,33 @@
+import type React from "react"
+import { notFound } from "next/navigation"
+import { NextIntlClientProvider } from "next-intl"
+import { getMessages, setRequestLocale } from "next-intl/server"
+import { hasLocale } from "next-intl"
+import { routing } from "@/i18n/routing"
+import { Header } from "@/components/header"
+
+type Props = {
+  children: React.ReactNode
+  params: Promise<{ locale: string }>
+}
+
+export function generateStaticParams() {
+  return routing.locales.map((locale) => ({ locale }))
+}
+
+export default async function LocaleLayout({ children, params }: Props) {
+  const { locale } = await params
+  if (!hasLocale(routing.locales, locale)) {
+    notFound()
+  }
+  setRequestLocale(locale)
+
+  const messages = await getMessages()
+
+  return (
+    <NextIntlClientProvider messages={messages}>
+      <Header />
+      <main className="min-h-[calc(100svh-3.5rem)]">{children}</main>
+    </NextIntlClientProvider>
+  )
+}

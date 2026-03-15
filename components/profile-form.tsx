@@ -11,6 +11,7 @@ import { Label } from "@/components/ui/label"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { useRouter } from "next/navigation"
 import type { User } from "@supabase/supabase-js"
+import { useTranslations } from "next-intl"
 
 interface Profile {
   id: string
@@ -20,6 +21,7 @@ interface Profile {
 }
 
 export function ProfileForm({ user, profile }: { user: User; profile: Profile | null }) {
+  const t = useTranslations("ProfileForm")
   const [username, setUsername] = useState(profile?.username || user.user_metadata?.username || "")
   const [bio, setBio] = useState(profile?.bio || "")
   const [isLoading, setIsLoading] = useState(false)
@@ -49,10 +51,10 @@ export function ProfileForm({ user, profile }: { user: User; profile: Profile | 
         data: { username },
       })
 
-      setMessage({ type: "success", text: "资料已更新" })
+      setMessage({ type: "success", text: t("saved") })
       router.refresh()
     } catch (error) {
-      setMessage({ type: "error", text: error instanceof Error ? error.message : "更新失败" })
+      setMessage({ type: "error", text: error instanceof Error ? error.message : t("updateFailed") })
     } finally {
       setIsLoading(false)
     }
@@ -61,31 +63,31 @@ export function ProfileForm({ user, profile }: { user: User; profile: Profile | 
   return (
     <Card>
       <CardHeader>
-        <CardTitle>个人资料</CardTitle>
+        <CardTitle>{t("title")}</CardTitle>
       </CardHeader>
       <CardContent>
         <form onSubmit={handleSubmit} className="space-y-6">
           <div className="grid gap-2">
-            <Label htmlFor="email">邮箱</Label>
+            <Label htmlFor="email">{t("email")}</Label>
             <Input id="email" value={user.email || ""} disabled className="bg-muted" />
-            <p className="text-xs text-muted-foreground">邮箱不可修改</p>
+            <p className="text-xs text-muted-foreground">{t("emailReadonly")}</p>
           </div>
 
           <div className="grid gap-2">
-            <Label htmlFor="username">用户名</Label>
+            <Label htmlFor="username">{t("username")}</Label>
             <Input
               id="username"
-              placeholder="输入您的用户名"
+              placeholder={t("usernamePlaceholder")}
               value={username}
               onChange={(e) => setUsername(e.target.value)}
             />
           </div>
 
           <div className="grid gap-2">
-            <Label htmlFor="bio">个人简介</Label>
+            <Label htmlFor="bio">{t("bio")}</Label>
             <Textarea
               id="bio"
-              placeholder="介绍一下自己..."
+              placeholder={t("bioPlaceholder")}
               value={bio}
               onChange={(e) => setBio(e.target.value)}
               rows={4}
@@ -99,7 +101,7 @@ export function ProfileForm({ user, profile }: { user: User; profile: Profile | 
           )}
 
           <Button type="submit" disabled={isLoading}>
-            {isLoading ? "保存中..." : "保存更改"}
+            {isLoading ? t("saving") : t("saveChanges")}
           </Button>
         </form>
       </CardContent>

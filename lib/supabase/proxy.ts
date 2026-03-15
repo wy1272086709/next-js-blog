@@ -29,10 +29,12 @@ export async function updateSession(request: NextRequest) {
     data: { user },
   } = await supabase.auth.getUser()
 
-  // 保护个人中心路由
-  if (request.nextUrl.pathname.startsWith("/dashboard") && !user) {
+  // 保护个人中心路由（支持 locale 前缀如 /zh-CN/dashboard）
+  const pathname = request.nextUrl.pathname
+  const localeMatch = pathname.match(/^\/(zh-CN|en)\/dashboard/)
+  if (localeMatch && !user) {
     const url = request.nextUrl.clone()
-    url.pathname = "/auth/login"
+    url.pathname = `/${localeMatch[1]}/auth/login`
     return NextResponse.redirect(url)
   }
 

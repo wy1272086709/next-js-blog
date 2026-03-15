@@ -3,11 +3,12 @@
 import { useState, useOptimistic, useTransition, useEffect } from "react"
 import { Button } from "@/components/ui/button"
 import { Heart } from "lucide-react"
-import { useRouter } from "next/navigation"
 import { cn } from "@/lib/utils"
 import { useToast } from "@/hooks/use-toast"
 import { createClient } from "@/lib/supabase/client"
 import type { User } from "@supabase/supabase-js"
+import { useTranslations } from "next-intl"
+import { useRouter } from "@/i18n/navigation"
 
 export function LikeButton({
   postId,
@@ -21,6 +22,7 @@ export function LikeButton({
   const [user, setUser] = useState<User | null>(null)
   const router = useRouter()
   const { toast } = useToast()
+  const t = useTranslations("LikeButton")
   const [isPending, startTransition] = useTransition()
   
   // 实际状态：从 props 初始化，后续由服务器响应更新
@@ -77,8 +79,8 @@ export function LikeButton({
           // 服务器错误：重置实际状态
           setLikeState({ count: initialLikeCount, liked: initialHasLiked })
           toast({
-            title: "错误",
-            description: error.error || "操作失败",
+            title: t("error"),
+            description: error.error || t("operationFailed"),
             variant: "destructive",
           })
           return
@@ -89,7 +91,7 @@ export function LikeButton({
         setLikeState({ count: data.count, liked: data.liked })
 
         toast({
-          title: data.liked ? "已点赞" : "已取消点赞",
+          title: data.liked ? t("liked") : t("unliked"),
           duration: 2000,
         })
       } catch (error) {
@@ -97,8 +99,8 @@ export function LikeButton({
         // 网络错误：重置实际状态
         setLikeState({ count: initialLikeCount, liked: initialHasLiked })
         toast({
-          title: "错误",
-          description: "网络错误，请稍后重试",
+          title: t("error"),
+          description: t("networkError"),
           variant: "destructive",
         })
       }

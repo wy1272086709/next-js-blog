@@ -1,0 +1,159 @@
+{
+  "metadata": {
+    "title": "Tech Blog - Explore the Possibilities of Technology",
+    "description": "A tech blog focused on frontend, backend and AI"
+  },
+  "Header": {
+    "siteName": "Tech Blog",
+    "posts": "Posts",
+    "dashboard": "Dashboard",
+    "login": "Login",
+    "signUp": "Sign Up"
+  },
+  "HomePage": {
+    "title": "Explore the Possibilities of Technology",
+    "subtitle": "A tech blog focused on frontend, backend and AI. Share knowledge, grow together with developers.",
+    "browsePosts": "Browse Posts",
+    "startWriting": "Start Writing",
+    "categoriesTitle": "Categories",
+    "frontend": "Frontend",
+    "frontendDesc": "React, Vue, Next.js, CSS, TypeScript and more",
+    "backend": "Backend",
+    "backendDesc": "Node.js, Python, Go, databases, microservices and more",
+    "ai": "AI",
+    "aiDesc": "ML, deep learning, LLM, AI applications and more"
+  },
+  "PostsPage": {
+    "allPosts": "All Posts",
+    "noPosts": "No posts yet"
+  },
+  "PostDetail": {
+    "anonymousUser": "Anonymous",
+    "reads": "reads",
+    "commentsCount": "comments",
+    "commentsTitle": "Comments"
+  },
+  "Auth": {
+    "login": "Login",
+    "loginDesc": "Enter your email and password to sign in",
+    "email": "Email",
+    "password": "Password",
+    "loggingIn": "Signing in...",
+    "loginError": "Login failed",
+    "invalidCredentials": "Invalid email or password",
+    "noAccount": "Don't have an account?",
+    "signUpNow": "Sign up",
+    "signUp": "Sign Up",
+    "signUpDesc": "Create your account to start writing",
+    "username": "Username",
+    "usernamePlaceholder": "Your username",
+    "confirmPassword": "Confirm password",
+    "passwordMismatch": "Passwords do not match",
+    "signUpError": "Sign up failed",
+    "signingUp": "Signing up...",
+    "hasAccount": "Already have an account?",
+    "signInNow": "Sign in",
+    "signUpSuccess": "Success!",
+    "checkEmail": "Please check your email to confirm your account",
+    "emailSent": "We've sent a confirmation email. Click the link in the email to activate your account.",
+    "backToLogin": "Back to Login"
+  },
+  "Dashboard": {
+    "overview": "Overview",
+    "myPosts": "My Posts",
+    "writePost": "Write Post",
+    "settings": "Settings",
+    "welcomeBack": "Welcome back, {name}",
+    "overviewDesc": "Here's your content at a glance",
+    "postCount": "Posts",
+    "totalViews": "Total views",
+    "totalLikes": "Likes",
+    "avgViews": "Avg. views",
+    "recentPosts": "Recent posts",
+    "noPostsYet": "You haven't published any posts yet",
+    "startFirstPost": "Click \"Write Post\" to create your first post",
+    "myPostsTitle": "My Posts",
+    "myPostsDesc": "Manage all your published posts",
+    "draft": "Draft",
+    "edit": "Edit",
+    "noMyPosts": "You haven't published any posts yet",
+    "writeFirstPost": "Write your first post",
+    "accountSettings": "Account Settings",
+    "settingsDesc": "Manage your profile",
+    "writeTitle": "Write Post",
+    "editPost": "Edit Post",
+    "writeDesc": "Share your knowledge and experience",
+    "editDesc": "Update your post content"
+  },
+  "CategorySidebar": {
+    "allPosts": "All Posts"
+  },
+  "PostCard": {
+    "anonymousUser": "Anonymous"
+  },
+  "UserNav": {
+    "dashboard": "Dashboard",
+    "writePost": "Write Post",
+    "signOut": "Sign Out"
+  },
+  "CommentSection": {
+    "loading": "Loading comments...",
+    "postComment": "Post a comment",
+    "placeholder": "Write your comment...",
+    "publish": "Publish",
+    "loginToComment": "Please",
+    "login": "sign in",
+    "afterLogin": "to comment",
+    "reply": "Reply",
+    "cancelReply": "Cancel",
+    "replyTo": "Reply to {name}...",
+    "user": "user",
+    "noComments": "No comments yet. Be the first!",
+    "anonymousUser": "Anonymous"
+  },
+  "LikeButton": {
+    "error": "Error",
+    "operationFailed": "Operation failed",
+    "liked": "Liked",
+    "unliked": "Unliked",
+    "networkError": "Network error, please try again later"
+  },
+  "DeletePostButton": {
+    "delete": "Delete",
+    "confirmTitle": "Confirm delete?",
+    "confirmDesc": "This cannot be undone. The post will be permanently deleted.",
+    "cancel": "Cancel",
+    "deleting": "Deleting...",
+    "confirmDelete": "Delete"
+  },
+  "ProfileForm": {
+    "title": "Profile",
+    "email": "Email",
+    "emailReadonly": "Email cannot be changed",
+    "username": "Username",
+    "usernamePlaceholder": "Your username",
+    "bio": "Bio",
+    "bioPlaceholder": "Tell us about yourself...",
+    "saved": "Profile updated",
+    "updateFailed": "Update failed",
+    "saving": "Saving...",
+    "saveChanges": "Save changes"
+  },
+  "WritePostForm": {
+    "title": "Title",
+    "titlePlaceholder": "Enter post title",
+    "category": "Category",
+    "categoryPlaceholder": "Select category",
+    "excerpt": "Excerpt (optional)",
+    "excerptPlaceholder": "Brief summary. Leave empty to use first 150 chars.",
+    "content": "Content",
+    "contentPlaceholder": "Write your content...",
+    "publishNow": "Publish now",
+    "saveDraft": "Save as draft",
+    "saveFailed": "Save failed",
+    "saving": "Saving...",
+    "updatePost": "Update post",
+    "publishPost": "Publish post",
+    "cancel": "Cancel"
+  }
+}

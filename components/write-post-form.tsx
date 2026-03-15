@@ -3,8 +3,9 @@
 import type React from "react"
 
 import { useState } from "react"
-import { useRouter } from "next/navigation"
 import { createClient } from "@/lib/supabase/client"
+import { useTranslations } from "next-intl"
+import { useRouter } from "@/i18n/navigation"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
@@ -45,6 +46,7 @@ export function WritePostForm({
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const router = useRouter()
+  const t = useTranslations("WritePostForm")
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -77,7 +79,7 @@ export function WritePostForm({
       router.push("/dashboard/posts")
       router.refresh()
     } catch (error) {
-      setError(error instanceof Error ? error.message : "保存失败")
+      setError(error instanceof Error ? error.message : t("saveFailed"))
     } finally {
       setIsLoading(false)
     }
@@ -88,10 +90,10 @@ export function WritePostForm({
       <Card>
         <CardContent className="p-6 space-y-6">
           <div className="grid gap-2">
-            <Label htmlFor="title">标题</Label>
+            <Label htmlFor="title">{t("title")}</Label>
             <Input
               id="title"
-              placeholder="输入文章标题"
+              placeholder={t("titlePlaceholder")}
               value={title}
               onChange={(e) => setTitle(e.target.value)}
               required
@@ -99,10 +101,10 @@ export function WritePostForm({
           </div>
 
           <div className="grid gap-2">
-            <Label htmlFor="category">分类</Label>
+            <Label htmlFor="category">{t("category")}</Label>
             <Select value={categoryId} onValueChange={setCategoryId}>
               <SelectTrigger>
-                <SelectValue placeholder="选择分类" />
+                <SelectValue placeholder={t("categoryPlaceholder")} />
               </SelectTrigger>
               <SelectContent>
                 {categories.map((category) => (
@@ -115,10 +117,10 @@ export function WritePostForm({
           </div>
 
           <div className="grid gap-2">
-            <Label htmlFor="excerpt">摘要（可选）</Label>
+            <Label htmlFor="excerpt">{t("excerpt")}</Label>
             <Textarea
               id="excerpt"
-              placeholder="输入文章摘要，留空将自动截取正文前150字"
+              placeholder={t("excerptPlaceholder")}
               value={excerpt}
               onChange={(e) => setExcerpt(e.target.value)}
               rows={2}
@@ -126,10 +128,10 @@ export function WritePostForm({
           </div>
 
           <div className="grid gap-2">
-            <Label htmlFor="content">正文</Label>
+            <Label htmlFor="content">{t("content")}</Label>
             <Textarea
               id="content"
-              placeholder="输入文章内容..."
+              placeholder={t("contentPlaceholder")}
               value={content}
               onChange={(e) => setContent(e.target.value)}
               rows={15}
@@ -140,7 +142,7 @@ export function WritePostForm({
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
               <Switch id="published" checked={published} onCheckedChange={setPublished} />
-              <Label htmlFor="published">{published ? "立即发布" : "保存为草稿"}</Label>
+              <Label htmlFor="published">{published ? t("publishNow") : t("saveDraft")}</Label>
             </div>
           </div>
 
@@ -148,10 +150,10 @@ export function WritePostForm({
 
           <div className="flex gap-4">
             <Button type="submit" disabled={isLoading}>
-              {isLoading ? "保存中..." : post ? "更新文章" : "发布文章"}
+              {isLoading ? t("saving") : post ? t("updatePost") : t("publishPost")}
             </Button>
             <Button type="button" variant="outline" onClick={() => router.back()}>
-              取消
+              {t("cancel")}
             </Button>
           </div>
         </CardContent>

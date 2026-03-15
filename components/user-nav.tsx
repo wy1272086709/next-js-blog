@@ -13,11 +13,12 @@ import {
 import { createClient } from "@/lib/supabase/client"
 import type { User } from "@supabase/supabase-js"
 import { LogOut, UserIcon, PenSquare } from "lucide-react"
-import { useRouter } from "next/navigation"
-import Link from "next/link"
+import { useTranslations } from "next-intl"
+import { Link, useRouter } from "@/i18n/navigation"
 
 export function UserNav({ user }: { user: User }) {
   const router = useRouter()
+  const t = useTranslations("UserNav")
 
   const handleSignOut = async () => {
     const supabase = createClient()
@@ -33,7 +34,10 @@ export function UserNav({ user }: { user: User }) {
       <DropdownMenuTrigger asChild>
         <Button variant="ghost" className="relative h-8 w-8 rounded-full">
           <Avatar className="h-8 w-8">
-            <AvatarImage src={user.user_metadata?.avatar_url || "/avatar.png"} alt={username} />
+            <AvatarImage
+              src={user.user_metadata?.avatar_url || "/avatar.png"}
+              alt={username}
+            />
             <AvatarFallback>{username?.charAt(0).toUpperCase()}</AvatarFallback>
           </Avatar>
         </Button>
@@ -42,26 +46,28 @@ export function UserNav({ user }: { user: User }) {
         <DropdownMenuLabel className="font-normal">
           <div className="flex flex-col space-y-1">
             <p className="text-sm font-medium leading-none">{username}</p>
-            <p className="text-xs leading-none text-muted-foreground">{user.email}</p>
+            <p className="text-xs leading-none text-muted-foreground">
+              {user.email}
+            </p>
           </div>
         </DropdownMenuLabel>
         <DropdownMenuSeparator />
         <DropdownMenuItem asChild>
           <Link href="/dashboard">
             <UserIcon className="mr-2 h-4 w-4" />
-            个人中心
+            {t("dashboard")}
           </Link>
         </DropdownMenuItem>
         <DropdownMenuItem asChild>
           <Link href="/dashboard/write">
             <PenSquare className="mr-2 h-4 w-4" />
-            写文章
+            {t("writePost")}
           </Link>
         </DropdownMenuItem>
         <DropdownMenuSeparator />
         <DropdownMenuItem onClick={handleSignOut}>
           <LogOut className="mr-2 h-4 w-4" />
-          退出登录
+          {t("signOut")}
         </DropdownMenuItem>
       </DropdownMenuContent>
     </DropdownMenu>

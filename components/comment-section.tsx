@@ -7,7 +7,9 @@ import { Button } from '@/components/ui/button'
 import { Textarea } from '@/components/ui/textarea'
 import { ThumbsUp, Reply, MessageSquare } from 'lucide-react'
 import { format } from 'date-fns'
-import { zhCN } from 'date-fns/locale'
+import { zhCN, enUS } from 'date-fns/locale'
+import { useLocale, useTranslations } from 'next-intl'
+import { Link } from '@/i18n/navigation'
 
 interface Comment {
   id: string
@@ -26,6 +28,10 @@ interface Comment {
 }
 
 export function CommentSection({ postId }: { postId: string }) {
+  const locale = useLocale()
+  const t = useTranslations('CommentSection')
+  const dateLocale = locale === 'zh-CN' ? zhCN : enUS
+  const dateFormat = locale === 'zh-CN' ? 'yyyy年M月d日 HH:mm' : 'MMM d, yyyy HH:mm'
   const [comments, setComments] = useState<Comment[]>([])
   const [loading, setLoading] = useState(true)
   const [commentText, setCommentText] = useState('')
@@ -307,14 +313,14 @@ export function CommentSection({ postId }: { postId: string }) {
   }
 
   if (loading) {
-    return <div className="text-center py-8">加载评论中...</div>
+    return <div className="text-center py-8">{t('loading')}</div>
   }
 
   return (
     <div className="space-y-6">
       {/* 评论输入框 */}
       <div className="border rounded-lg p-4">
-        <h3 className="font-medium mb-4">发表评论</h3>
+        <h3 className="font-medium mb-4">{t('postComment')}</h3>
         {user ? (
           <form onSubmit={handleSubmitComment} className="space-y-4">
             <div className="flex items-start gap-4">
@@ -324,7 +330,7 @@ export function CommentSection({ postId }: { postId: string }) {
               </Avatar>
               <div className="flex-1">
                 <Textarea
-                  placeholder="写下你的评论..."
+                  placeholder={t('placeholder')}
                   value={commentText}
                   onChange={(e) => setCommentText(e.target.value)}
                   className="min-h-[100px] resize-none"
@@ -335,7 +341,7 @@ export function CommentSection({ postId }: { postId: string }) {
                     {commentText.length}/1000
                   </span>
                   <Button type="submit" disabled={!commentText.trim()}>
-                    发布评论
+                    {t('publish')}
                   </Button>
                 </div>
               </div>
@@ -343,7 +349,7 @@ export function CommentSection({ postId }: { postId: string }) {
           </form>
         ) : (
           <p className="text-center py-8">
-            请 <a href="/auth/login" className="text-blue-500 hover:underline">登录</a> 后发表评论
+            {t('loginToComment')} <Link href="/auth/login" className="text-blue-500 hover:underline">{t('login')}</Link> {t('afterLogin')}
           </p>
         )}
       </div>
@@ -360,9 +366,9 @@ export function CommentSection({ postId }: { postId: string }) {
                 </Avatar>
                 <div className="flex-1 space-y-2">
                   <div>
-                    <h4 className="font-medium">{comment.profiles?.username || "匿名用户"}</h4>
+                    <h4 className="font-medium">{comment.profiles?.username || t('anonymousUser')}</h4>
                     <p className="text-sm text-muted-foreground">
-                      {format(new Date(comment.created_at), "yyyy年M月d日 HH:mm", { locale: zhCN })}
+                      {format(new Date(comment.created_at), dateFormat, { locale: dateLocale })}
                     </p>
                   </div>
                   <p>{comment.content}</p>
@@ -384,7 +390,7 @@ export function CommentSection({ postId }: { postId: string }) {
                         className="flex items-center gap-1 hover:text-blue-500 transition-colors"
                       >
                         <Reply className="h-4 w-4" />
-                        <span>回复</span>
+                        <span>{t('reply')}</span>
                       </button>
                     )}
                   </div>
@@ -399,7 +405,7 @@ export function CommentSection({ postId }: { postId: string }) {
                         </Avatar>
                         <div className="flex-1">
                           <Textarea
-                            placeholder={`回复 ${comment.profiles?.username || "用户"}...`}
+                            placeholder={t('replyTo', { name: comment.profiles?.username || t('user') })}
                             value={replyText}
                             onChange={(e) => setReplyText(e.target.value)}
                             className="min-h-[80px] resize-none"
@@ -418,10 +424,10 @@ export function CommentSection({ postId }: { postId: string }) {
                                   setReplyText('')
                                 }}
                               >
-                                取消回复
+                                {t('cancelReply')}
                               </Button>
                               <Button type="submit" disabled={!replyText.trim()}>
-                                回复
+                                {t('reply')}
                               </Button>
                             </div>
                           </div>
@@ -442,9 +448,9 @@ export function CommentSection({ postId }: { postId: string }) {
                             </Avatar>
                             <div className="flex-1 space-y-1">
                               <div>
-                                <h5 className="font-medium text-sm">{reply.profiles?.username || "匿名用户"}</h5>
+                                <h5 className="font-medium text-sm">{reply.profiles?.username || t('anonymousUser')}</h5>
                                 <p className="text-xs text-muted-foreground">
-                                  {format(new Date(reply.created_at), "yyyy年M月d日 HH:mm", { locale: zhCN })}
+                                  {format(new Date(reply.created_at), dateFormat, { locale: dateLocale })}
                                 </p>
                               </div>
                               <p className="text-sm">{reply.content}</p>
@@ -466,7 +472,7 @@ export function CommentSection({ postId }: { postId: string }) {
                                     className="flex items-center gap-1 hover:text-blue-500 transition-colors"
                                   >
                                     <Reply className="h-3 w-3" />
-                                    <span>回复</span>
+                                    <span>{t('reply')}</span>
                                   </button>
                                 )}
                               </div>
@@ -481,7 +487,7 @@ export function CommentSection({ postId }: { postId: string }) {
                                     </Avatar>
                                     <div className="flex-1">
                                       <Textarea
-                                        placeholder={`回复 ${reply.profiles?.username || "用户"}...`}
+                                        placeholder={t('replyTo', { name: reply.profiles?.username || t('user') })}
                                         value={replyText}
                                         onChange={(e) => setReplyText(e.target.value)}
                                         className="min-h-[60px] resize-none text-sm"
@@ -501,10 +507,10 @@ export function CommentSection({ postId }: { postId: string }) {
                                               setReplyText('')
                                             }}
                                           >
-                                            取消回复
+                                            {t('cancelReply')}
                                           </Button>
                                           <Button type="submit" size="sm" disabled={!replyText.trim()}>
-                                            回复
+                                            {t('reply')}
                                           </Button>
                                         </div>
                                       </div>
@@ -525,7 +531,7 @@ export function CommentSection({ postId }: { postId: string }) {
         ) : (
           <div className="text-center py-8 text-muted-foreground">
             <MessageSquare className="h-12 w-12 mx-auto mb-4 opacity-20" />
-            <p>暂无评论，快来发表第一条评论吧！</p>
+            <p>{t('noComments')}</p>
           </div>
         )}
       </div>
