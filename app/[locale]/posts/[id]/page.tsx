@@ -45,7 +45,7 @@ export default async function PostPage({ params }: Props) {
   const dateLocale = locale === "zh-CN" ? zhCN : enUS
   const dateFormat = locale === "zh-CN" ? "yyyy年M月d日" : "MMM d, yyyy"
   // 使用了依赖动态 API（如 cookies）的 Supabase 服务端客户端
-  // 
+  // bug修复
   const supabase = await createClient()
   const likeKey = `post:${id}:likes`
   const [postResult, cachedCount, authResult] = await Promise.all([
