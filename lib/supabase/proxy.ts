@@ -4,7 +4,7 @@ import { NextResponse, type NextRequest } from "next/server"
 export async function updateSession(request: NextRequest) {
   let supabaseResponse = NextResponse.next({
     request,
-  })
+  });
 
   const supabase = createServerClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -23,11 +23,11 @@ export async function updateSession(request: NextRequest) {
         },
       },
     },
-  )
+  );
 
   const {
     data: { user },
-  } = await supabase.auth.getUser()
+  } = await supabase.auth.getUser();
 
   // 保护个人中心路由（支持 locale 前缀如 /zh-CN/dashboard）
   const pathname = request.nextUrl.pathname

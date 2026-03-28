@@ -16,15 +16,21 @@ import { LogOut, UserIcon, PenSquare } from "lucide-react"
 import { useTranslations } from "next-intl"
 import { Link, useRouter } from "@/i18n/navigation"
 
-export function UserNav({ user }: { user: User }) {
+export function UserNav({ user, onSignOut }: { user: User; onSignOut?: () => Promise<void> }) {
   const router = useRouter()
   const t = useTranslations("UserNav")
 
   const handleSignOut = async () => {
-    const supabase = createClient()
-    await supabase.auth.signOut()
-    router.push("/")
-    router.refresh()
+    // 使用传入的 onSignOut（来自 AuthContext）
+    if (onSignOut) {
+      await onSignOut()
+    } else {
+      // fallback 到原来的逻辑
+      const supabase = createClient()
+      await supabase.auth.signOut()
+      router.push("/")
+      router.refresh()
+    }
   }
 
   const username = user.user_metadata?.username || user.email?.split("@")[0]

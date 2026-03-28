@@ -4,7 +4,8 @@ import { NextIntlClientProvider } from "next-intl"
 import { getMessages, setRequestLocale } from "next-intl/server"
 import { hasLocale } from "next-intl"
 import { routing } from "@/i18n/routing"
-import { Header } from "@/components/header"
+import { HybridHeader } from "@/components/hybrid-header"
+import { ClientLayout } from "./client-layout"
 
 type Props = {
   children: React.ReactNode
@@ -26,8 +27,11 @@ export default async function LocaleLayout({ children, params }: Props) {
 
   return (
     <NextIntlClientProvider messages={messages}>
-      <Header />
-      <main className="min-h-[calc(100svh-3.5rem)]">{children}</main>
+      {/* 使用混合 Header，兼顾服务端 SEO 和客户端交互 */}
+      <HybridHeader />
+      <main className="min-h-[calc(100svh-3.5rem)]">
+        <ClientLayout>{children}</ClientLayout>
+      </main>
     </NextIntlClientProvider>
   )
 }
