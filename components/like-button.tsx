@@ -54,14 +54,16 @@ export function LikeButton({
       router.push("/auth/login")
       return
     }
-    startTransition(async () => {
-      // 计算乐观更新的目标值（基于当前实际状态）
-      const optimisticNew = {
-        count: likeState.liked ? likeState.count - 1 : likeState.count + 1,
-        liked: !likeState.liked,
-      }
-      setOptimisticState(optimisticNew) // 立即更新 UI
 
+    // 立即计算乐观更新并触发 UI 更新
+    const optimisticNew = {
+      count: likeState.liked ? likeState.count - 1 : likeState.count + 1,
+      liked: !likeState.liked,
+    }
+    setOptimisticState(optimisticNew)
+
+    // 在 background 中执行实际的 API 调用
+    ;(async () => {
       try {
         const response = await fetch(`/api/posts/${postId}/like`, {
           method: "POST",
@@ -69,7 +71,9 @@ export function LikeButton({
 
         if (response.status === 401) {
           // 未登录：重置实际状态（与初始值一致），乐观状态会自动回退
-          setLikeState({ count: initialLikeCount, liked: initialHasLiked })
+          startTransition(() => {
+            setLikeState({ count: initialLikeCount, liked: initialHasLiked })
+          })
           router.push("/auth/login")
           return
         }
@@ -77,7 +81,9 @@ export function LikeButton({
         if (!response.ok) {
           const error = await response.json()
           // 服务器错误：重置实际状态
-          setLikeState({ count: initialLikeCount, liked: initialHasLiked })
+          startTransition(() => {
+            setLikeState({ count: initialLikeCount, liked: initialHasLiked })
+          })
           toast({
             title: t("error"),
             description: error.error || t("operationFailed"),
@@ -88,7 +94,9 @@ export function LikeButton({
 
         const data = await response.json()
         // 成功：用服务器返回的真实数据更新实际状态
-        setLikeState({ count: data.count, liked: data.liked })
+        startTransition(() => {
+          setLikeState({ count: data.count, liked: data.liked })
+        })
 
         toast({
           title: data.liked ? t("liked") : t("unliked"),
@@ -97,14 +105,16 @@ export function LikeButton({
       } catch (error) {
         console.error("点赞失败:", error)
         // 网络错误：重置实际状态
-        setLikeState({ count: initialLikeCount, liked: initialHasLiked })
+        startTransition(() => {
+          setLikeState({ count: initialLikeCount, liked: initialHasLiked })
+        })
         toast({
           title: t("error"),
           description: t("networkError"),
           variant: "destructive",
         })
       }
-    })
+    })()
   }
 
   return (
