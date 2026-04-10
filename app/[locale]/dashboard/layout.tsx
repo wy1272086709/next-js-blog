@@ -2,11 +2,14 @@ import type React from "react"
 import { redirect } from "@/i18n/navigation"
 import { createClient } from "@/lib/supabase/server"
 import { DashboardSidebar } from "@/components/dashboard-sidebar"
+import { useLocale } from "next-intl"
 
 export default async function DashboardLayout({
   children,
+  params,
 }: {
   children: React.ReactNode
+  params: { locale: string }
 }) {
   const supabase = await createClient()
   const {
@@ -14,7 +17,7 @@ export default async function DashboardLayout({
   } = await supabase.auth.getUser()
 
   if (!user) {
-    redirect("/auth/login")
+    redirect({ href: "/auth/login", locale: params.locale })
   }
 
   return (

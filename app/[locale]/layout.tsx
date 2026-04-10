@@ -27,8 +27,6 @@ export default async function LocaleLayout({ children, params }: Props) {
 
   return (
     <NextIntlClientProvider messages={messages}>
-      {/* 使用混合 Header，兼顾服务端 SEO 和客户端交互 */}
-      <HybridHeader />
       <main className="min-h-[calc(100svh-3.5rem)]">
         <ClientLayout>{children}</ClientLayout>
       </main>

@@ -1,8 +1,8 @@
 "use client"
-
 import { Button } from "@/components/ui/button"
 import { UserNav } from "@/components/user-nav"
 import { LanguageSwitcher } from "@/components/language-switcher"
+import { Clock } from "@/components/clock"
 import { PenSquare } from "lucide-react"
 import { useTranslations } from "next-intl"
 import { Link, useRouter } from "@/i18n/navigation"
@@ -27,7 +27,10 @@ export function ClientHeader() {
             </div>
           </div>
           <div className="flex items-center gap-2">
-            <div className="animate-pulse bg-gray-300 rounded w-20 h-8" />
+            <>
+              <Clock />
+              <div className="animate-pulse bg-gray-300 rounded w-20 h-8" />
+            </>
           </div>
         </div>
       </header>
@@ -60,6 +63,7 @@ export function ClientHeader() {
           </nav>
         </div>
         <div className="flex items-center gap-2">
+          <Clock />
           <LanguageSwitcher />
           {user ? (
             <UserNav user={user} onSignOut={signOut} />
