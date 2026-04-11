@@ -5,7 +5,7 @@ import type React from "react"
 import { useState } from "react"
 import { createClient } from "@/lib/supabase/client"
 import { useTranslations } from "next-intl"
-import { useRouter } from "@/i18n/navigation"
+import { useRouter, getPathname } from "@/i18n/navigation"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
@@ -13,6 +13,7 @@ import { Label } from "@/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Switch } from "@/components/ui/switch"
 import { Card, CardContent } from "@/components/ui/card"
+import { Loader2 } from "lucide-react"
 
 interface Category {
   id: string
@@ -44,7 +45,61 @@ export function WritePostForm({
   const [categoryId, setCategoryId] = useState(post?.category_id || "")
   const [published, setPublished] = useState(post?.published ?? true)
   const [isLoading, setIsLoading] = useState(false)
+  const [isGeneratingSummary, setIsGeneratingSummary] = useState(false)
   const [error, setError] = useState<string | null>(null)
+
+  const generateSummary = async () => {
+    if (!content.trim()) {
+      setError("请先输入内容再生成摘要")
+      return
+    }
+
+    setIsGeneratingSummary(true)
+    setError(null)
+
+    try {
+      // 使用带语言前缀的路径
+      const pathname = window.location.pathname.startsWith('/zh-CN')
+        ? '/zh-CN/dashboard'
+        : '/en/dashboard';
+
+      const response = await fetch(pathname, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          content: content.trim()
+        })
+      })
+
+      const data = await response.json()
+
+      if (!response.ok) {
+        throw new Error(data.error || "摘要生成失败")
+      }
+
+      if (!data.result || typeof data.result !== 'string') {
+        throw new Error("返回的摘要格式不正确")
+      }
+
+      // 提取AI生成的摘要，如果太长则截取
+      const summary = data.result.trim()
+      if (summary.length > 150) {
+        setExcerpt(summary.substring(0, 150) + '...')
+      } else {
+        setExcerpt(summary)
+      }
+    } catch (error) {
+      console.error('生成摘要错误:', error)
+      const errorMessage = error instanceof Error ? error.message : "生成摘要失败，请稍后重试"
+      setError(errorMessage)
+      // 如果AI生成失败，使用内容的前150个字符作为摘要
+      setExcerpt(content.substring(0, 150))
+    } finally {
+      setIsGeneratingSummary(false)
+    }
+  }
   const router = useRouter()
   const t = useTranslations("WritePostForm")
 
@@ -117,17 +172,6 @@ export function WritePostForm({
           </div>
 
           <div className="grid gap-2">
-            <Label htmlFor="excerpt">{t("excerpt")}</Label>
-            <Textarea
-              id="excerpt"
-              placeholder={t("excerptPlaceholder")}
-              value={excerpt}
-              onChange={(e) => setExcerpt(e.target.value)}
-              rows={2}
-            />
-          </div>
-
-          <div className="grid gap-2">
             <Label htmlFor="content">{t("content")}</Label>
             <Textarea
               id="content"
@@ -139,6 +183,39 @@ export function WritePostForm({
             />
           </div>
 
+          <div className="grid gap-2">
+            <Label htmlFor="excerpt">{t("excerpt")}</Label>
+            <div className="flex gap-2">
+              <Textarea
+                id="excerpt"
+                placeholder={t("excerptPlaceholder")}
+                value={excerpt}
+                onChange={(e) => setExcerpt(e.target.value)}
+                rows={2}
+                className="flex-1"
+              />
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={generateSummary}
+                disabled={isGeneratingSummary || !content.trim()}
+                className="mt-6 h-10 shrink-0"
+              >
+                {isGeneratingSummary ? (
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                ) : (
+                  "AI生成摘要"
+                )}
+              </Button>
+              {error && (
+                <div className="text-sm text-destructive mt-2">
+                  {error}
+                </div>
+              )}
+            </div>
+          </div>
+          
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
               <Switch id="published" checked={published} onCheckedChange={setPublished} />

@@ -1,7 +1,7 @@
+import { createServerClient } from "@supabase/ssr"
 import createMiddleware from "next-intl/middleware"
 import { routing } from "./i18n/routing"
-import { updateSession } from "@/lib/supabase/proxy"
-import type { NextRequest } from "next/server"
+import { NextResponse, type NextRequest } from "next/server"
 
 /**
  * 国际化中间件 - 处理语言路由
@@ -11,7 +11,45 @@ const intlMiddleware = createMiddleware(routing)
 /**
  * 认证中间件 - 处理用户认证
  */
-const authMiddleware = updateSession
+async function authMiddleware(request: NextRequest) {
+  let supabaseResponse = NextResponse.next({
+    request,
+  });
+
+  const supabase = createServerClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+    {
+      cookies: {
+        getAll() {
+          return request.cookies.getAll()
+        },
+        setAll(cookiesToSet) {
+          cookiesToSet.forEach(({ name, value }) => request.cookies.set(name, value))
+          supabaseResponse = NextResponse.next({
+            request,
+          })
+          cookiesToSet.forEach(({ name, value, options }) => supabaseResponse.cookies.set(name, value, options))
+        },
+      },
+    },
+  );
+
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  // 保护个人中心路由（支持 locale 前缀如 /zh-CN/dashboard）
+  const pathname = request.nextUrl.pathname
+  const localeMatch = pathname.match(/^\/(zh-CN|en)\/dashboard/)
+  if (localeMatch && !user) {
+    const url = request.nextUrl.clone()
+    url.pathname = `/${localeMatch[1]}/auth/login`
+    return NextResponse.redirect(url)
+  }
+
+  return supabaseResponse
+}
 
 /**
  * 根目录中间件 - 组合所有中间件逻辑
