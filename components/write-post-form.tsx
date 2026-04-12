@@ -60,10 +60,10 @@ export function WritePostForm({
     try {
       // 使用带语言前缀的路径
       const pathname = window.location.pathname.startsWith('/zh-CN')
-        ? '/zh-CN/dashboard'
-        : '/en/dashboard';
+        ? '/api/zh-CN/dashboard'
+        : '/api/en/dashboard';
 
-      const response = await fetch(pathname, {
+      const response = await fetch('/api/dashboard', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -208,11 +208,6 @@ export function WritePostForm({
                   "AI生成摘要"
                 )}
               </Button>
-              {error && (
-                <div className="text-sm text-destructive mt-2">
-                  {error}
-                </div>
-              )}
             </div>
           </div>
           

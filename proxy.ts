@@ -57,6 +57,7 @@ async function authMiddleware(request: NextRequest) {
  * 执行顺序：
  * 1. 国际化处理（语言检测和重定向）
  * 2. 认证处理（登录状态检查）
+ * 3. API 路由特殊处理（移除语言前缀）
  *
  * 这样设计的好处：
  * - 统一的入口点
@@ -64,6 +65,8 @@ async function authMiddleware(request: NextRequest) {
  * - 易于维护和调试
  */
 export default function middleware(request: NextRequest) {
+  const pathname = request.nextUrl.pathname
+
   // 1. 先处理国际化路由
   const intlResponse = intlMiddleware(request)
   if (intlResponse.status >= 300 && intlResponse.status < 400) {
@@ -71,14 +74,22 @@ export default function middleware(request: NextRequest) {
     return intlResponse
   }
 
-  // 2. 处理认证逻辑
+  // 2. 处理 API 路由的语言前缀
+  const apiLocaleMatch = pathname.match(/^\/(zh-CN|en)\/api\/(.*)/)
+  if (apiLocaleMatch && apiLocaleMatch[2]) {
+    // 重写到不包含语言前缀的 API 路由
+    request.nextUrl.pathname = `/api/${apiLocaleMatch[2]}`
+    return NextResponse.rewrite(request.nextUrl)
+  }
+
+  // 3. 处理认证逻辑
   return authMiddleware(request)
 }
 
 export const config = {
-  // 匹配所有非静态文件和非 API 路由
+  // 匹配所有需要处理的路径，包括 API 路由
   matcher: [
-    "/((?!api|_next|_vercel|.*\\..*).*)",
+    // 匹配所有非静态文件的路由
     "/((?!_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)",
   ],
 }
