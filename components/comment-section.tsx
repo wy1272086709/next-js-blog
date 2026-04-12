@@ -10,6 +10,7 @@ import { format } from 'date-fns'
 import { zhCN, enUS } from 'date-fns/locale'
 import { useLocale, useTranslations } from 'next-intl'
 import { Link } from '@/i18n/navigation'
+import { ensureUserProfile } from '@/lib/utils/profiles'
 
 interface Comment {
   id: string
@@ -165,6 +166,15 @@ export function CommentSection({ postId }: { postId: string }) {
     if (!commentText.trim() || !user) return
 
     const supabase = createClient()
+
+    try {
+      // 确保用户资料存在
+      await ensureUserProfile(user.id)
+    } catch (error) {
+      console.error('Error creating user profile:', error)
+      return
+    }
+
     const { data: newComment, error } = await supabase
       .from('comments')
       .insert({
@@ -208,6 +218,15 @@ export function CommentSection({ postId }: { postId: string }) {
     if (!replyText.trim() || !user || !replyingTo) return
 
     const supabase = createClient()
+
+    try {
+      // 确保用户资料存在
+      await ensureUserProfile(user.id)
+    } catch (error) {
+      console.error('Error creating user profile:', error)
+      return
+    }
+
     const { data: newReply, error } = await supabase
       .from('comments')
       .insert({
