@@ -4,7 +4,7 @@ import { useAuthWithListener } from "@/hooks/use-auth-listener"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { useTranslations } from "next-intl"
-import { useRouter } from "@/i18n/navigation"
+import { useRouter, getPathname } from "@/i18n/navigation"
 
 export function AuthExample() {
   const { user, loading, signOut } = useAuthWithListener()
@@ -30,7 +30,7 @@ export function AuthExample() {
           </CardHeader>
           <CardContent>
             <Button
-              onClick={() => router.push("/auth/login")}
+              onClick={() => router.push(getPathname({ href: "/auth/login", locale: "zh-CN" }))}
               className="w-full"
             >
               {t("goToLogin")}

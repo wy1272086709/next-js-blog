@@ -1,10 +1,10 @@
 'use server'
 
-import { createServerClient } from '@/lib/supabase/server'
+import { createServerSideClient } from '@/lib/supabase/server'
 import { revalidatePath } from 'next/cache'
 
 export async function createProfileIfNotExists(userId: string) {
-  const supabase = await createServerClient()
+  const supabase = createServerSideClient()
 
   // 检查 profile 是否存在
   const { data: profile, error } = await supabase
@@ -50,7 +50,7 @@ export async function updateProfile(userId: string, updates: {
   avatar_url?: string
   bio?: string
 }) {
-  const supabase = await createServerClient()
+  const supabase = createServerSideClient()
 
   const { data: profile, error } = await supabase
     .from('profiles')

@@ -8,7 +8,7 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { useState } from "react"
 import { useTranslations } from "next-intl"
-import { Link, useRouter } from "@/i18n/navigation"
+import { Link, useRouter, getPathname } from "@/i18n/navigation"
 
 export default function SignUpPage() {
   const [email, setEmail] = useState("")
@@ -41,7 +41,7 @@ export default function SignUpPage() {
         },
       })
       if (error) throw error
-      router.push("/auth/sign-up-success")
+      router.push(getPathname({ href: "/auth/sign-up-success" }))
     } catch {
       setError(t("signUpError"))
     } finally {
@@ -109,7 +109,7 @@ export default function SignUpPage() {
               </div>
               <div className="mt-4 text-center text-sm">
                 {t("hasAccount")}{" "}
-                <Link href="/auth/login" className="underline underline-offset-4 hover:text-primary">
+                <Link href={getPathname({ href: "/auth/login" })} className="underline underline-offset-4 hover:text-primary">
                   {t("signInNow")}
                 </Link>
               </div>

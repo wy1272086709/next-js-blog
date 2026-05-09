@@ -3,7 +3,7 @@
 import { createContext, useContext, useEffect, useState, ReactNode } from "react"
 import { createClient } from "@/lib/supabase/client"
 import { User } from "@supabase/supabase-js"
-import { useRouter } from "@/i18n/navigation"
+import { useRouter, getPathname } from "@/i18n/navigation"
 
 interface AuthContextType {
   user: User | null
@@ -43,7 +43,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             setUser(session?.user || null)
             // 如果用户从登录页来，重定向到 dashboard
             if (window.location.pathname === "/auth/login") {
-              router.push("/dashboard")
+              router.push(getPathname({ href: "/dashboard", locale: "zh-CN" }))
             }
             break
           case "SIGNED_OUT":
@@ -51,7 +51,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             // 清除本地存储的状态
             localStorage.removeItem("auth-cache")
             // 重定向到首页
-            router.push("/")
+            router.push(getPathname({ href: "/", locale: "zh-CN" }))
             break
           case "TOKEN_REFRESHED":
             // Token 自动刷新，更新用户信息

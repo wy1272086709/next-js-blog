@@ -1,8 +1,7 @@
-import { createClient } from '@/lib/supabase/server'
-import { createServerClient } from '@/lib/supabase/server'
+import { createServerSideClient } from '@/lib/supabase/server'
 
 export async function ensureUserProfile(userId: string) {
-  const supabase = await createServerClient()
+  const supabase = createServerSideClient()
 
   // Check if profile exists
   const { data: profile, error: fetchError } = await supabase
@@ -44,7 +43,7 @@ export async function ensureUserProfile(userId: string) {
 }
 
 export async function getUserProfile(userId: string) {
-  const supabase = await createServerClient()
+  const supabase = createServerSideClient()
 
   const { data: profile, error } = await supabase
     .from('profiles')

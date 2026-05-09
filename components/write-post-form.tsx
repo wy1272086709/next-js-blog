@@ -131,7 +131,7 @@ export function WritePostForm({
         if (error) throw error
       }
 
-      router.push("/dashboard/posts")
+      router.push(getPathname({ href: "/dashboard/posts" }))
       router.refresh()
     } catch (error) {
       setError(error instanceof Error ? error.message : t("saveFailed"))

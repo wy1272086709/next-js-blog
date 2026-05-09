@@ -8,7 +8,7 @@ import { useToast } from "@/hooks/use-toast"
 import { createClient } from "@/lib/supabase/client"
 import type { User } from "@supabase/supabase-js"
 import { useTranslations } from "next-intl"
-import { useRouter } from "@/i18n/navigation"
+import { useRouter, getPathname } from "@/i18n/navigation"
 
 export function LikeButton({
   postId,
@@ -51,7 +51,7 @@ export function LikeButton({
   const handleLike = () => {
     // 未登陆，则跳转至登录页
     if (!user) {
-      router.push("/auth/login")
+      router.push(getPathname({ href: "/auth/login" }))
       return
     }
 
@@ -74,7 +74,7 @@ export function LikeButton({
           startTransition(() => {
             setLikeState({ count: initialLikeCount, liked: initialHasLiked })
           })
-          router.push("/auth/login")
+          router.push(getPathname({ href: "/auth/login" }))
           return
         }
 

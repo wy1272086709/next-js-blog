@@ -33,7 +33,7 @@ export default async function HomePage({ params }: Props) {
               </Link>
             </Button>
             <Button size="lg" variant="outline" asChild>
-              <Link href="/auth/sign-up">{t("startWriting")}</Link>
+              <Link href="/dashboard/write">{t("startWriting")}</Link>
             </Button>
           </div>
         </div>

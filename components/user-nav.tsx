@@ -14,7 +14,7 @@ import { createClient } from "@/lib/supabase/client"
 import type { User } from "@supabase/supabase-js"
 import { LogOut, UserIcon, PenSquare } from "lucide-react"
 import { useTranslations } from "next-intl"
-import { Link, useRouter } from "@/i18n/navigation"
+import { Link, useRouter, getPathname } from "@/i18n/navigation"
 
 export function UserNav({ user, onSignOut }: { user: User; onSignOut?: () => Promise<void> }) {
   const router = useRouter()
@@ -28,7 +28,7 @@ export function UserNav({ user, onSignOut }: { user: User; onSignOut?: () => Pro
       // fallback 到原来的逻辑
       const supabase = createClient()
       await supabase.auth.signOut()
-      router.push("/")
+      router.push(getPathname({ href: "/", locale: "zh-CN" }))
       router.refresh()
     }
   }

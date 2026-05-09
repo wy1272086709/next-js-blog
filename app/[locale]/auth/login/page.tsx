@@ -8,7 +8,7 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { useState } from "react"
 import { useTranslations } from "next-intl"
-import { Link, useRouter } from "@/i18n/navigation"
+import { Link, useRouter, getPathname } from "@/i18n/navigation"
 
 export default function LoginPage() {
   const [email, setEmail] = useState("")
@@ -26,7 +26,7 @@ export default function LoginPage() {
     try {
       const { error } = await supabase.auth.signInWithPassword({ email, password })
       if (error) throw error
-      router.push("/dashboard")
+      router.push(getPathname({ href: "/dashboard" }))
       router.refresh()
     } catch (err: unknown) {
       if ((err as { code?: string })?.code === "invalid_credentials") {
@@ -78,7 +78,7 @@ export default function LoginPage() {
               </div>
               <div className="mt-4 text-center text-sm">
                 {t("noAccount")}{" "}
-                <Link href="/auth/sign-up" className="underline underline-offset-4 hover:text-primary">
+                <Link href={getPathname({ href: "/auth/sign-up" })} className="underline underline-offset-4 hover:text-primary">
                   {t("signUpNow")}
                 </Link>
               </div>
