@@ -4,7 +4,7 @@ import { useState, useEffect } from "react"
 import { format } from "date-fns"
 
 export function Clock() {
-  const [currentTime, setCurrentTime] = useState<Date>(new Date())
+  const [currentTime, setCurrentTime] = useState<Date | null>(null)
 
   useEffect(() => {
     // Update time every second
@@ -17,7 +17,7 @@ export function Clock() {
   }, [])
 
   // Format time as HH:MM:SS (24-hour format is universal)
-  const formattedTime = format(currentTime, "HH:mm:ss")
+  const formattedTime = currentTime ? format(currentTime, "HH:mm:ss") : "--:--:--"
 
   return (
     <div

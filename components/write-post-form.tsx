@@ -14,6 +14,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Switch } from "@/components/ui/switch"
 import { Card, CardContent } from "@/components/ui/card"
 import { Loader2 } from "lucide-react"
+import { RichEditor } from "@/components/react-quill-editor"
 
 interface Category {
   id: string
@@ -173,12 +174,10 @@ export function WritePostForm({
 
           <div className="grid gap-2">
             <Label htmlFor="content">{t("content")}</Label>
-            <Textarea
-              id="content"
-              placeholder={t("contentPlaceholder")}
+            <RichEditor
               value={content}
-              onChange={(e) => setContent(e.target.value)}
-              rows={15}
+              onChange={setContent}
+              placeholder={t("contentPlaceholder")}
               required
             />
           </div>
