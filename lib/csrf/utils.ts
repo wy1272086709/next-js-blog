@@ -8,7 +8,7 @@ export function generateCSRFToken() {
 
 // 从 session 获取 CSRF Token
 export async function getCSRFToken() {
-  const cookieStore = cookies()
+  const cookieStore = await cookies()
 
   try {
     const supabase = createServerClient(
@@ -38,7 +38,7 @@ export async function getCSRFToken() {
 
 // 设置 CSRF Token 到 session
 export async function setCSRFToken(token: string) {
-  const cookieStore = cookies()
+  const cookieStore = await cookies()
 
   try {
     const supabase = createServerClient(
@@ -83,7 +83,7 @@ export async function setCSRFToken(token: string) {
 // 验证 CSRF Token
 export async function validateCSRFToken(token: string): Promise<boolean> {
   try {
-    const cookieStore = cookies()
+    const cookieStore = await cookies()
     const supabase = createServerClient(
       process.env.NEXT_PUBLIC_SUPABASE_URL!,
       process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,

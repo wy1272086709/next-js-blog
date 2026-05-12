@@ -2,7 +2,7 @@ import { initializeCSRFToken } from '@/lib/csrf/utils'
 import { cookies } from 'next/headers'
 
 export async function CSRFProvider({ children }: { children: React.ReactNode }) {
-  const cookieStore = cookies()
+  const cookieStore = await cookies()
 
   // 初始化 CSRF token
   await initializeCSRFToken()
