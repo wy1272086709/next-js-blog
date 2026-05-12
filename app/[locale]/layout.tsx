@@ -5,6 +5,7 @@ import { getMessages, setRequestLocale } from "next-intl/server"
 import { hasLocale } from "next-intl"
 import { routing } from "@/i18n/routing"
 import { ClientLayout } from "./client-layout"
+import { CSRFProvider } from "@/components/csrf-provider"
 
 type Props = {
   children: React.ReactNode
@@ -26,9 +27,11 @@ export default async function LocaleLayout({ children, params }: Props) {
 
   return (
     <NextIntlClientProvider messages={messages}>
-      <main className="min-h-[calc(100svh-3.5rem)]">
-        <ClientLayout>{children}</ClientLayout>
-      </main>
+      <CSRFProvider>
+        <main className="min-h-[calc(100svh-3.5rem)]">
+          <ClientLayout>{children}</ClientLayout>
+        </main>
+      </CSRFProvider>
     </NextIntlClientProvider>
   )
 }

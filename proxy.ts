@@ -9,7 +9,7 @@ import { NextResponse, type NextRequest } from "next/server"
 const intlMiddleware = createMiddleware(routing)
 
 /**
- * 认证中间件 - 处理用户认证
+ * 认证中间件 - 处理用户认证和 CSRF 保护
  */
 async function authMiddleware(request: NextRequest) {
   let supabaseResponse = NextResponse.next({
@@ -38,6 +38,42 @@ async function authMiddleware(request: NextRequest) {
   const {
     data: { user },
   } = await supabase.auth.getUser();
+
+  // CSRF 保护 - 只对敏感操作启用
+  const protectedMethods = ['POST', 'PUT', 'DELETE', 'PATCH'];
+  const isProtectedMethod = protectedMethods.includes(request.method);
+  const isApiRoute = request.nextUrl.pathname.startsWith('/api/');
+
+  if (isProtectedMethod && isApiRoute) {
+    // 排除认证相关的 API 端点
+    const isAuthApi = request.nextUrl.pathname.includes('/api/auth/');
+    const isPublicApi = request.nextUrl.pathname.includes('/api/public/');
+
+    if (!isAuthApi && !isPublicApi) {
+      // 检查 CSRF token
+      const csrfTokenFromSession = user?.user_metadata?.csrf_token;
+      const csrfTokenFromCookie = request.cookies.get('csrf_token')?.value;
+
+      if (!csrfTokenFromSession || csrfTokenFromSession !== csrfTokenFromCookie) {
+        return NextResponse.json({ error: 'Invalid CSRF token' }, { status: 403 });
+      }
+
+      // 对于 JSON 请求，检查请求体中的 csrf_token
+      const contentType = request.headers.get('content-type');
+      if (contentType?.includes('application/json')) {
+        try {
+          const body = await request.clone().json();
+          const csrfTokenFromBody = body?.csrf_token;
+
+          if (csrfTokenFromBody !== csrfTokenFromSession) {
+            return NextResponse.json({ error: 'CSRF token mismatch' }, { status: 403 });
+          }
+        } catch (e) {
+          // 如果 JSON 解析失败，忽略
+        }
+      }
+    }
+  }
 
   // 保护个人中心路由（支持 locale 前缀如 /zh-CN/dashboard）
   const pathname = request.nextUrl.pathname
