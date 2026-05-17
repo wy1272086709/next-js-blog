@@ -29,7 +29,7 @@ export default async function MyPostsPage({ params }: Props) {
     data: { user },
   } = await supabase.auth.getUser()
 
-  if (!user) redirect("/auth/login")
+  if (!user) redirect({ href: "/auth/login", locale })
 
   const { data: posts } = await supabase
     .from("posts")

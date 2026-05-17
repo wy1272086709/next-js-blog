@@ -28,7 +28,8 @@ export function UserNav({ user, onSignOut }: { user: User; onSignOut?: () => Pro
       // fallback 到原来的逻辑
       const supabase = createClient()
       await supabase.auth.signOut()
-      router.push(getPathname({ href: "/", locale: "zh-CN" }))
+      const path = getPathname({ href: "/", locale: "" });
+      router.push(path)
       router.refresh()
     }
   }

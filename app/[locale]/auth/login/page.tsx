@@ -26,7 +26,7 @@ export default function LoginPage() {
     try {
       const { error } = await supabase.auth.signInWithPassword({ email, password })
       if (error) throw error
-      router.push(getPathname({ href: "/dashboard" }))
+      router.push(getPathname({ href: "/dashboard", locale: "" }))
       router.refresh()
     } catch (err: unknown) {
       if ((err as { code?: string })?.code === "invalid_credentials") {
@@ -78,7 +78,7 @@ export default function LoginPage() {
               </div>
               <div className="mt-4 text-center text-sm">
                 {t("noAccount")}{" "}
-                <Link href={getPathname({ href: "/auth/sign-up" })} className="underline underline-offset-4 hover:text-primary">
+                <Link href={getPathname({ href: "/auth/sign-up", locale: "" })} className="underline underline-offset-4 hover:text-primary">
                   {t("signUpNow")}
                 </Link>
               </div>

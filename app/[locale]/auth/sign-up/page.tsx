@@ -41,7 +41,7 @@ export default function SignUpPage() {
         },
       })
       if (error) throw error
-      router.push(getPathname({ href: "/auth/sign-up-success" }))
+      router.push(getPathname({ href: "/auth/sign-up-success", locale: "" } ))
     } catch {
       setError(t("signUpError"))
     } finally {
@@ -109,7 +109,7 @@ export default function SignUpPage() {
               </div>
               <div className="mt-4 text-center text-sm">
                 {t("hasAccount")}{" "}
-                <Link href={getPathname({ href: "/auth/login" })} className="underline underline-offset-4 hover:text-primary">
+                <Link href={getPathname({ href: "/auth/login", locale: "" })} className="underline underline-offset-4 hover:text-primary">
                   {t("signInNow")}
                 </Link>
               </div>

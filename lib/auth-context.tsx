@@ -43,7 +43,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             setUser(session?.user || null)
             // 如果用户从登录页来，重定向到 dashboard
             if (window.location.pathname === "/auth/login") {
-              router.push(getPathname({ href: "/dashboard", locale: "zh-CN" }))
+              router.push(getPathname({ href: "/dashboard", locale: "" }))
             }
             break
           case "SIGNED_OUT":
@@ -51,7 +51,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             // 清除本地存储的状态
             localStorage.removeItem("auth-cache")
             // 重定向到首页
-            router.push(getPathname({ href: "/", locale: "zh-CN" }))
+            router.push(getPathname({ href: "/", locale: "" }))
             break
           case "TOKEN_REFRESHED":
             // Token 自动刷新，更新用户信息

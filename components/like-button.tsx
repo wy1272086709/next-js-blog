@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useOptimistic, useTransition, useEffect } from "react"
+import { useState, useOptimistic, useEffect } from "react"
 import { Button } from "@/components/ui/button"
 import { Heart } from "lucide-react"
 import { cn } from "@/lib/utils"
@@ -23,7 +23,6 @@ export function LikeButton({
   const router = useRouter()
   const { toast } = useToast()
   const t = useTranslations("LikeButton")
-  const [isPending, startTransition] = useTransition()
   
   // 实际状态：从 props 初始化，后续由服务器响应更新
   const [likeState, setLikeState] = useState({
@@ -49,11 +48,15 @@ export function LikeButton({
   }, [initialLikeCount, initialHasLiked])
 
   const handleLike = () => {
+    console.log("点击了点赞按钮，当前用户信息:", user)
     // 未登陆，则跳转至登录页
     if (!user) {
-      router.push(getPathname({ href: "/auth/login" }))
+      router.push(getPathname({ href: "/auth/login", locale: "" }))
       return
     }
+
+    // 保存当前状态，用于失败时回滚
+    const previousState = { ...likeState }
 
     // 立即计算乐观更新并触发 UI 更新
     const optimisticNew = {
@@ -70,20 +73,18 @@ export function LikeButton({
         })
 
         if (response.status === 401) {
-          // 未登录：重置实际状态（与初始值一致），乐观状态会自动回退
-          startTransition(() => {
-            setLikeState({ count: initialLikeCount, liked: initialHasLiked })
-          })
-          router.push(getPathname({ href: "/auth/login" }))
+          // 未登录：回滚到之前的状态
+          setOptimisticState(previousState)
+          setLikeState(previousState)
+          router.push(getPathname({ href: "/auth/login", locale: "" }))
           return
         }
 
         if (!response.ok) {
           const error = await response.json()
-          // 服务器错误：重置实际状态
-          startTransition(() => {
-            setLikeState({ count: initialLikeCount, liked: initialHasLiked })
-          })
+          // 服务器错误：回滚到之前的状态
+          setOptimisticState(previousState)
+          setLikeState(previousState)
           toast({
             title: t("error"),
             description: error.error || t("operationFailed"),
@@ -94,9 +95,8 @@ export function LikeButton({
 
         const data = await response.json()
         // 成功：用服务器返回的真实数据更新实际状态
-        startTransition(() => {
-          setLikeState({ count: data.count, liked: data.liked })
-        })
+        setLikeState({ count: data.count, liked: data.liked })
+        setOptimisticState({ count: data.count, liked: data.liked })
 
         toast({
           title: data.liked ? t("liked") : t("unliked"),
@@ -104,10 +104,9 @@ export function LikeButton({
         })
       } catch (error) {
         console.error("点赞失败:", error)
-        // 网络错误：重置实际状态
-        startTransition(() => {
-          setLikeState({ count: initialLikeCount, liked: initialHasLiked })
-        })
+        // 网络错误：回滚到之前的状态
+        setOptimisticState(previousState)
+        setLikeState(previousState)
         toast({
           title: t("error"),
           description: t("networkError"),
@@ -122,7 +121,7 @@ export function LikeButton({
       variant="outline"
       size="sm"
       onClick={handleLike}
-      disabled={isPending}
+      disabled={false}
       className="gap-2 bg-transparent"
     >
       <Heart

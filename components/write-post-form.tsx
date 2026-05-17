@@ -48,10 +48,12 @@ export function WritePostForm({
   const [isLoading, setIsLoading] = useState(false)
   const [isGeneratingSummary, setIsGeneratingSummary] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [hasSubmitted, setHasSubmitted] = useState(false)
 
   const generateSummary = async () => {
     if (!content.trim()) {
       setError("请先输入内容再生成摘要")
+      setHasSubmitted(true)
       return
     }
 
@@ -103,15 +105,21 @@ export function WritePostForm({
   }
   const router = useRouter()
   const t = useTranslations("WritePostForm")
-
+  console.log("error ", error);
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
+    setHasSubmitted(true)
     setIsLoading(true)
     setError(null)
 
     const supabase = createClient()
 
     try {
+      if (!content.trim()) {
+        setError("请先输入内容")
+        setHasSubmitted(true)
+        return
+      }
       const postData = {
         title,
         content,
@@ -131,9 +139,15 @@ export function WritePostForm({
 
         if (error) throw error
       }
-
-      router.push(getPathname({ href: "/dashboard/posts" }))
+      const path = getPathname({
+        href: "/dashboard/posts",
+        locale: '',
+      });
+      // 从cookie 中获取语言前缀，构建带语言前缀的路径
+      console.log("Redirecting to:", path);
+      router.push(path)
       router.refresh()
+      setError(null)
     } catch (error) {
       setError(error instanceof Error ? error.message : t("saveFailed"))
     } finally {
@@ -178,7 +192,7 @@ export function WritePostForm({
               value={content}
               onChange={setContent}
               placeholder={t("contentPlaceholder")}
-              required
+              hasSubmitted={hasSubmitted}
             />
           </div>
 
@@ -199,7 +213,7 @@ export function WritePostForm({
                 size="sm"
                 onClick={generateSummary}
                 disabled={isGeneratingSummary || !content.trim()}
-                className="mt-6 h-10 shrink-0"
+                className="mt-6 h-10 shrink-0 mt-auto mb-auto"
               >
                 {isGeneratingSummary ? (
                   <Loader2 className="h-4 w-4 animate-spin" />

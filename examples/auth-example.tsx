@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { useTranslations } from "next-intl"
 import { useRouter, getPathname } from "@/i18n/navigation"
+import { toast } from "@/hooks/use-toast"
 
 export function AuthExample() {
   const { user, loading, signOut } = useAuthWithListener()
@@ -30,7 +31,7 @@ export function AuthExample() {
           </CardHeader>
           <CardContent>
             <Button
-              onClick={() => router.push(getPathname({ href: "/auth/login", locale: "zh-CN" }))}
+              onClick={() => router.push(getPathname({ href: "/auth/login", locale: "" }))}
               className="w-full"
             >
               {t("goToLogin")}
@@ -45,7 +46,7 @@ export function AuthExample() {
     <div className="container mx-auto px-4 py-8">
       <Card>
         <CardHeader>
-          <CardTitle>{t("welcomeBack", { username: user.email })}</CardTitle>
+          <CardTitle>{t("welcomeBack", { username: user.email! })}</CardTitle>
           <CardDescription>{t("userStatus")}</CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">

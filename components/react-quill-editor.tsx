@@ -15,7 +15,7 @@ interface RichEditorProps {
   onChange: (value: string) => void
   placeholder?: string
   height?: number
-  required?: boolean
+  hasSubmitted?: boolean
 }
 
 export function RichEditor({
@@ -23,7 +23,7 @@ export function RichEditor({
   onChange,
   placeholder = "Start writing your post...",
   height = 500,
-  required = false
+  hasSubmitted = false
 }: RichEditorProps) {
   const [isPreviewMode, setIsPreviewMode] = useState(false)
 
@@ -73,11 +73,18 @@ export function RichEditor({
         )}
       </div>
 
-      {/* Character count and required indicator */}
+      {/* Character count and validation error */}
       <div className="flex justify-between items-center px-4 pb-2">
-        <span className={`text-sm ${required && !value ? 'text-destructive' : 'text-muted-foreground'}`}>
-          {required && !value ? 'Content is required' : `${value.length} characters`}
-        </span>
+        {hasSubmitted && !value && (
+          <span className="text-sm text-destructive">
+            Content is required
+          </span>
+        )}
+        {value && (
+          <span className="text-sm text-muted-foreground">
+            {value.length} characters
+          </span>
+        )}
       </div>
     </div>
   )
