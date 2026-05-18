@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server"
 import { createServerClient } from "@supabase/ssr"
 import { cookies } from "next/headers"
+import { getServerMessage } from "@/lib/i18n/server"
 
 async function createSupabaseClient() {
   const cookieStore = await cookies()
@@ -35,7 +36,7 @@ export async function POST(request: NextRequest, { params }: { params: { id: str
     const { data: { user }, error: userError } = await supabase.auth.getUser()
     console.log("当前用户信息:", user, '错误:', userError)
     if (userError || !user || !user.id) {
-      return NextResponse.json({ error: "未授权" }, { status: 401 })
+      return NextResponse.json({ error: await getServerMessage("api.unauthorized") }, { status: 401 })
     }
 
     const postId = (await params).id
@@ -61,7 +62,7 @@ export async function POST(request: NextRequest, { params }: { params: { id: str
     console.log("检查点赞状态:", existingLike, '错误:', checkError)
     // 如果错误是 PGRST116 (no rows returned)，说明没有点赞记录，这是正常情况
     if (checkError && checkError.code !== 'PGRST116') {
-      return NextResponse.json({ error: "检查点赞状态失败" }, { status: 500 })
+      return NextResponse.json({ error: await getServerMessage("api.checkLikeStatusFailed") }, { status: 500 })
     }
 
     let liked: boolean
@@ -75,7 +76,7 @@ export async function POST(request: NextRequest, { params }: { params: { id: str
         .eq("id", existingLike.id)
 
       if (deleteError) {
-        return NextResponse.json({ error: "取消点赞失败" }, { status: 500 })
+        return NextResponse.json({ error: await getServerMessage("api.unlikeFailed") }, { status: 500 })
       }
 
       liked = false
@@ -97,7 +98,7 @@ export async function POST(request: NextRequest, { params }: { params: { id: str
         })
 
       if (insertError) {
-        return NextResponse.json({ error: "点赞失败" }, { status: 500 })
+        return NextResponse.json({ error: await getServerMessage("api.likeFailed") }, { status: 500 })
       }
 
       liked = true
@@ -119,7 +120,7 @@ export async function POST(request: NextRequest, { params }: { params: { id: str
 
   } catch (error) {
     console.error("点赞操作错误:", error)
-    return NextResponse.json({ error: "服务器错误" }, { status: 500 })
+    return NextResponse.json({ error: await getServerMessage("api.serverError", "Internal server error") }, { status: 500 })
   }
 }
 
@@ -136,7 +137,7 @@ export async function GET(request: NextRequest, { params }: { params: { id: stri
       .eq("post_id", postId)
 
     if (countError) {
-      return NextResponse.json({ error: "获取点赞数失败" }, { status: 500 })
+      return NextResponse.json({ error: await getServerMessage("api.getLikeCountFailed") }, { status: 500 })
     }
 
     // 如果用户已登录，检查当前用户是否点赞了该文章
@@ -163,6 +164,6 @@ export async function GET(request: NextRequest, { params }: { params: { id: stri
 
   } catch (error) {
     console.error("获取点赞状态错误:", error)
-    return NextResponse.json({ error: "服务器错误" }, { status: 500 })
+    return NextResponse.json({ error: await getServerMessage("api.serverError", "Internal server error") }, { status: 500 })
   }
 }

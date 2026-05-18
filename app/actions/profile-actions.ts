@@ -23,7 +23,7 @@ export async function createProfileIfNotExists(userId: string) {
       .from('profiles')
       .insert({
         id: userId,
-        username: `用户${userId.slice(-6)}`, // 使用用户 ID 的最后6位作为默认用户名
+        username: `user_${userId.slice(-6)}`, // 使用 user_ 前缀加用户 ID 的最后6位作为默认用户名
         created_at: new Date().toISOString(),
         updated_at: new Date().toISOString()
       })

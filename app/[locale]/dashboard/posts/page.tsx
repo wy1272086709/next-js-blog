@@ -21,8 +21,9 @@ export default async function MyPostsPage({ params }: Props) {
   const { locale } = await params
   setRequestLocale(locale)
   const t = await getTranslations("Dashboard")
+  const dateFormatT = await getTranslations("dateFormat")
   const dateLocale = locale === "zh-CN" ? zhCN : enUS
-  const dateFormat = locale === "zh-CN" ? "yyyy年M月d日" : "MMM d, yyyy"
+  const dateFormat = dateFormatT("yearMonthDay")
 
   const supabase = await createClient()
   const {

@@ -31,8 +31,9 @@ interface Comment {
 export function CommentSection({ postId }: { postId: string }) {
   const locale = useLocale()
   const t = useTranslations('CommentSection')
+  const dateFormatT = useTranslations('dateFormat')
   const dateLocale = locale === 'zh-CN' ? zhCN : enUS
-  const dateFormat = locale === 'zh-CN' ? 'yyyy年M月d日 HH:mm' : 'MMM d, yyyy HH:mm'
+  const dateFormat = dateFormatT('yearMonthDayTime')
   const [comments, setComments] = useState<Comment[]>([])
   const [loading, setLoading] = useState(true)
   const [commentText, setCommentText] = useState('')

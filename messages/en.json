@@ -155,5 +155,25 @@
     "updatePost": "Update post",
     "publishPost": "Publish post",
     "cancel": "Cancel"
+  },
+  "dateFormat": {
+    "yearMonthDay": "MMM d, yyyy",
+    "yearMonthDayTime": "MMM d, yyyy HH:mm"
+  },
+  "api": {
+    "unauthorized": "Unauthorized",
+    "checkLikeStatusFailed": "Failed to check like status",
+    "unlikeFailed": "Failed to unlike",
+    "likeFailed": "Failed to like",
+    "getLikeCountFailed": "Failed to get like count",
+    "serverError": "Internal server error",
+    "contentEmpty": "Content cannot be empty"
+  },
+  "ai": {
+    "invalidResult": "AI returned invalid result",
+    "generateSummaryFailed": "Failed to generate summary",
+    "configError": "AI service configuration error, please contact administrator",
+    "timeout": "Request timeout, please try again later",
+    "generateSummaryFailedRetry": "Failed to generate summary, please try again later"
   }
 }

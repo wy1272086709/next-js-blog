@@ -42,8 +42,9 @@ export default async function PostPage({ params }: Props) {
   const { locale, id } = await params
   setRequestLocale(locale)
   const t = await getTranslations("PostDetail")
+  const dateFormatT = await getTranslations("dateFormat")
   const dateLocale = locale === "zh-CN" ? zhCN : enUS
-  const dateFormat = locale === "zh-CN" ? "yyyy年M月d日" : "MMM d, yyyy"
+  const dateFormat = dateFormatT("yearMonthDay")
   // 使用了依赖动态 API（如 cookies）的 Supabase 服务端客户端
   // bug修复
   const supabase = await createClient()
