@@ -3,10 +3,13 @@ import type { Metadata } from "next"
 import { Geist, Geist_Mono } from "next/font/google"
 import { Analytics } from "@vercel/analytics/next"
 import { getTranslations } from "next-intl/server"
+import { routing } from "@/i18n/routing"
+import { getRequestConfig } from "next-intl/server"
 import "./globals.css"
 
 const _geist = Geist({ subsets: ["latin"] })
 const _geistMono = Geist_Mono({ subsets: ["latin"] })
+
 
 export async function generateMetadata(): Promise<Metadata> {
   const t = await getTranslations("metadata")
@@ -24,6 +27,10 @@ export async function generateMetadata(): Promise<Metadata> {
       apple: "/apple-icon.png",
     },
   }
+}
+
+export async function getLocale() {
+  return routing.defaultLocale
 }
 
 export default async function RootLayout({

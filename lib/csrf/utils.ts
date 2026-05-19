@@ -50,7 +50,7 @@ export async function setCSRFToken(token: string) {
             return cookieStore.getAll()
           },
           setAll() {
-            // No-op
+            // No-op - cookie setting is handled by Server Action
           },
         },
       }
@@ -67,50 +67,13 @@ export async function setCSRFToken(token: string) {
       })
     }
 
-    // 同时设置短期 cookie 用于快速验证
-    cookieStore.set('csrf_token', token, {
-      httpOnly: false,
-      secure: process.env.NODE_ENV === 'production',
-      sameSite: 'lax' as const,
-      maxAge: 300, // 5分钟过期
-      path: '/'
-    })
+    // Note: Cookie setting is now handled by the Server Action
+    // The cookie will be set in the response headers automatically
   } catch (error) {
     console.error('Error setting CSRF token:', error)
   }
 }
 
-// 验证 CSRF Token
-export async function validateCSRFToken(token: string): Promise<boolean> {
-  try {
-    const cookieStore = await cookies()
-    const supabase = createServerClient(
-      process.env.NEXT_PUBLIC_SUPABASE_URL!,
-      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-      {
-        cookies: {
-          getAll() {
-            return cookieStore.getAll()
-          },
-          setAll() {
-            // No-op
-          },
-        },
-      }
-    )
-
-    const { data: { session } } = await supabase.auth.getSession()
-
-    // 验证 token 是否匹配
-    const sessionToken = session?.user?.user_metadata?.csrf_token
-    const cookieValue = cookieStore.get('csrf_token')?.value
-
-    return token === sessionToken && token === cookieValue
-  } catch (error) {
-    console.error('Error validating CSRF token:', error)
-    return false
-  }
-}
 
 // 初始化 CSRF Token（如果不存在）
 export async function initializeCSRFToken() {

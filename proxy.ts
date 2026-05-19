@@ -47,14 +47,32 @@ async function authMiddleware(request: NextRequest) {
     // 排除认证相关的 API 端点
     const isAuthApi = request.nextUrl.pathname.includes('/api/auth/');
     const isPublicApi = request.nextUrl.pathname.includes('/api/public/');
+    const isCsrfApi = request.nextUrl.pathname.includes('/api/csrf');
 
-    if (!isAuthApi && !isPublicApi) {
-      // 检查 CSRF token
+    if (!isAuthApi && !isPublicApi && !isCsrfApi) {
+      // 检查 CSRF token - 双重验证
       const csrfTokenFromSession = user?.user_metadata?.csrf_token;
       const csrfTokenFromCookie = request.cookies.get('csrf_token')?.value;
 
-      if (!csrfTokenFromSession || csrfTokenFromSession !== csrfTokenFromCookie) {
-        return NextResponse.json({ error: 'Invalid CSRF token' }, { status: 403 });
+      // 严格验证：两个 token 都必须存在且匹配
+      if (!csrfTokenFromSession || !csrfTokenFromCookie || csrfTokenFromSession !== csrfTokenFromCookie) {
+        return NextResponse.json(
+          {
+            error: 'Invalid CSRF token',
+            details: {
+              session_token: csrfTokenFromSession ? 'present' : 'missing',
+              cookie_token: csrfTokenFromCookie ? 'present' : 'missing'
+            }
+          },
+          {
+            status: 403,
+            headers: {
+              'X-CSRF-Error': 'invalid_token',
+              'X-CSRF-Session': csrfTokenFromSession || 'missing',
+              'X-CSRF-Cookie': csrfTokenFromCookie || 'missing'
+            }
+          }
+        );
       }
 
       // 对于 JSON 请求，检查请求体中的 csrf_token
@@ -65,7 +83,15 @@ async function authMiddleware(request: NextRequest) {
           const csrfTokenFromBody = body?.csrf_token;
 
           if (csrfTokenFromBody !== csrfTokenFromSession) {
-            return NextResponse.json({ error: 'CSRF token mismatch' }, { status: 403 });
+            return NextResponse.json(
+              { error: 'CSRF token mismatch in request body' },
+              {
+                status: 403,
+                headers: {
+                  'X-CSRF-Error': 'body_token_mismatch'
+                }
+              }
+            );
           }
         } catch (e) {
           // 如果 JSON 解析失败，忽略
