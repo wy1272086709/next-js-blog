@@ -2,6 +2,7 @@
 import { Button } from "@/components/ui/button"
 import { UserNav } from "@/components/user-nav"
 import { LanguageSwitcher } from "@/components/language-switcher"
+import { ThemeToggle } from "@/components/theme-toggle"
 import { PenSquare } from "lucide-react"
 import { useTranslations } from "next-intl"
 import { Link, useRouter } from "@/i18n/navigation"
@@ -61,6 +62,7 @@ export function ClientHeader() {
           </nav>
         </div>
         <div className="flex items-center gap-2">
+          <ThemeToggle />
           <LanguageSwitcher />
           {user ? (
             <UserNav user={user} onSignOut={signOut} />

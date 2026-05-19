@@ -60,7 +60,7 @@ export function RichEditor({
               onChange={onChange}
               placeholder={placeholder}
               height={height}
-              visibleDragBar={false}
+              visibledragbar={false}
               textareaProps={{
                 style: {
                   fontSize: 14,

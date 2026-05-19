@@ -5,6 +5,8 @@ import { Analytics } from "@vercel/analytics/next"
 import { getTranslations } from "next-intl/server"
 import { routing } from "@/i18n/routing"
 import { getRequestConfig } from "next-intl/server"
+import { ThemeProvider } from "@/components/theme-provider"
+import { Toaster } from "@/components/ui/toaster"
 import "./globals.css"
 
 const _geist = Geist({ subsets: ["latin"] })
@@ -39,9 +41,17 @@ export default async function RootLayout({
   const locale = await getLocale()
 
   return (
-    <html lang={locale}>
+    <html lang={locale} suppressHydrationWarning>
       <body className="font-sans antialiased">
-        {children}
+        <ThemeProvider
+          attribute="class"
+          defaultTheme="system"
+          enableSystem
+          disableTransitionOnChange
+        >
+          {children}
+        </ThemeProvider>
+        <Toaster />
         <Analytics />
       </body>
     </html>

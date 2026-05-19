@@ -27,7 +27,6 @@ export default function LoginPage() {
       const { error } = await supabase.auth.signInWithPassword({ email, password })
       if (error) throw error
       router.push(getPathname({ href: "/dashboard", locale: "" }))
-      router.refresh()
     } catch (err: unknown) {
       if ((err as { code?: string })?.code === "invalid_credentials") {
         setError(t("invalidCredentials"))
