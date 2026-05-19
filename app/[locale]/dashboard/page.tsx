@@ -1,11 +1,12 @@
 import { setRequestLocale } from "next-intl/server"
 import { getTranslations } from "next-intl/server"
 import { redirect } from "@/i18n/navigation"
-import { createClient } from "@/lib/supabase/server"
+import { createServerClient } from "@supabase/ssr"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { FileText, Heart, Eye, TrendingUp } from "lucide-react"
 import { PostCard } from "@/components/post-card"
 import { routing } from "@/i18n/routing"
+import { unstable_cache } from "next/cache"
 
 type Props = { params: Promise<{ locale: string }> }
 
@@ -13,58 +14,94 @@ export function generateStaticParams() {
   return routing.locales.map((locale) => ({ locale }))
 }
 
+// 创建不依赖 cookies 的 Supabase 客户端
+const createSupabaseServerClient = () => {
+  return createServerClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+    {
+      cookies: {
+        getAll() {
+          return []
+        },
+        setAll() {
+          // No-op for server-only operations
+        },
+      },
+    }
+  )
+}
+
+// 缓存用户仪表板数据
+const getDashboardStats = unstable_cache(
+  async (userId: string) => {
+    // 使用不依赖 cookies 的客户端
+    const supabase = createSupabaseServerClient()
+
+    // 单次查询获取所有统计数据
+    const { data: posts } = await supabase
+      .from("posts")
+      .select(`
+        id,
+        title,
+        excerpt,
+        published,
+        created_at,
+        updated_at,
+        view_count,
+        category_id (
+          name,
+          slug
+        )
+      `)
+      .eq("author_id", userId)
+      .order("created_at", { ascending: false })
+
+    // 获取用户名和头像
+    const { data: profile } = await supabase
+      .from("profiles")
+      .select("username, avatar_url")
+      .eq("id", userId)
+      .single()
+
+    // 获取点赞数 - 使用更高效的方式
+    const { data: allLikes } = await supabase
+      .from("likes")
+      .select("post_id")
+      .in("post_id", posts?.map((p: any) => p.id) || [])
+
+    const stats = {
+      postCount: posts?.length || 0,
+      totalViews: posts?.reduce((sum: number, post: any) => sum + (post.view_count || 0), 0) || 0,
+      totalLikes: allLikes?.length || 0,
+      username: profile?.username || null,
+      avatarUrl: profile?.avatar_url || null,
+      recentPosts: posts?.slice(0, 3) || []
+    }
+
+    return stats
+  },
+  ["dashboard-stats"],
+  { revalidate: 60, tags: ["dashboard"] } // 缓存60秒
+)
+
 export default async function DashboardPage({ params }: Props) {
   const { locale } = await params
   setRequestLocale(locale)
   const t = await getTranslations("Dashboard")
 
-  const supabase = await createClient()
+  // 需要一个带 cookies 支持的客户端来获取用户信息
+  const supabase = await import("@/lib/supabase/server").then(m => m.createClient())
   const {
     data: { user },
   } = await supabase.auth.getUser()
 
   if (!user) redirect("/auth/login")
 
-  const { count: postCount } = await supabase
-    .from("posts")
-    .select("*", { count: "exact", head: true })
-    .eq("author_id", user.id)
+  // 使用缓存函数获取数据
+  const stats = await getDashboardStats(user.id!)
 
-  const { data: viewData } = await supabase
-    .from("posts")
-    .select("view_count")
-    .eq("author_id", user.id)
-  const totalViews = viewData?.reduce((sum, post) => sum + (post.view_count || 0), 0) || 0
-
-  const { data: userPosts } = await supabase
-    .from("posts")
-    .select("id")
-    .eq("author_id", user.id)
-  let totalLikes = 0
-  if (userPosts?.length) {
-    const postIds = userPosts.map((p) => p.id)
-    const { count } = await supabase
-      .from("likes")
-      .select("*", { count: "exact", head: true })
-      .in("post_id", postIds)
-    totalLikes = count || 0
-  }
-
-  const { data: recentPosts } = await supabase
-    .from("posts")
-    .select(
-      `
-      *,
-      profiles:author_id(username, avatar_url),
-      categories:category_id(name, slug),
-      likes(count)
-    `
-    )
-    .eq("author_id", user.id)
-    .order("created_at", { ascending: false })
-    .limit(3)
-
-  const username = user.user_metadata?.username || user.email?.split("@")[0]
+  const username = stats.username || user.user_metadata?.username || user.email?.split("@")[0]
 
   return (
     <div className="space-y-8">
@@ -79,7 +116,7 @@ export default async function DashboardPage({ params }: Props) {
             <FileText className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{postCount || 0}</div>
+            <div className="text-2xl font-bold">{stats.postCount}</div>
           </CardContent>
         </Card>
         <Card>
@@ -88,7 +125,7 @@ export default async function DashboardPage({ params }: Props) {
             <Eye className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{totalViews}</div>
+            <div className="text-2xl font-bold">{stats.totalViews}</div>
           </CardContent>
         </Card>
         <Card>
@@ -97,7 +134,7 @@ export default async function DashboardPage({ params }: Props) {
             <Heart className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{totalLikes}</div>
+            <div className="text-2xl font-bold">{stats.totalLikes}</div>
           </CardContent>
         </Card>
         <Card>
@@ -107,16 +144,16 @@ export default async function DashboardPage({ params }: Props) {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">
-              {postCount ? Math.round(totalViews / postCount) : 0}
+              {stats.postCount ? Math.round(stats.totalViews / stats.postCount) : 0}
             </div>
           </CardContent>
         </Card>
       </div>
       <div>
         <h2 className="text-xl font-semibold mb-4">{t("recentPosts")}</h2>
-        {recentPosts?.length ? (
+        {stats.recentPosts?.length ? (
           <div className="grid gap-4">
-            {recentPosts.map((post) => (
+            {stats.recentPosts.map((post: any) => (
               <PostCard key={post.id} post={post} />
             ))}
           </div>
