@@ -14,6 +14,14 @@ const Markdown = dynamic(
   { ssr: false }
 )
 
+// Function to clean markdown content to prevent empty src attributes
+const cleanMarkdown = (content: string): string => {
+  if (!content) return ""
+
+  // Remove empty image tags ![alt]()
+  return content.replace(/!\[.*?\]\(\s*\)/g, "")
+}
+
 interface RichEditorProps {
   value: string
   onChange: (value: string) => void
@@ -58,7 +66,7 @@ export function RichEditor({
             className="h-full overflow-y-auto"
             onClick={(e) => console.log('Preview mode clicked:', e)}
           >
-            <Markdown source={value || undefined} />
+            <Markdown source={value ? cleanMarkdown(value) : undefined} />
           </div>
         ) : (
           // Edit mode

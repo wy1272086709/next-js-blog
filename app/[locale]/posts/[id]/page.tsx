@@ -122,7 +122,7 @@ export default async function PostPage({ params }: Props) {
       <h1 className="text-3xl md:text-4xl font-bold mb-6 text-balance">{post.title}</h1>
       <div className="flex items-center gap-4 mb-8 pb-8 border-b">
         <Avatar className="h-10 w-10">
-          <AvatarImage src={author?.avatar_url || "/avatar.png"} />
+          <AvatarImage src={author?.avatar_url ? author.avatar_url : undefined} />
           <AvatarFallback>{author?.username?.charAt(0).toUpperCase()}</AvatarFallback>
         </Avatar>
         <div className="flex-1">

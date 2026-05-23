@@ -42,7 +42,7 @@ export function UserNav({ user, onSignOut }: { user: User; onSignOut?: () => Pro
         <Button variant="ghost" className="relative h-8 w-8 rounded-full">
           <Avatar className="h-8 w-8">
             <AvatarImage
-              src={user.user_metadata?.avatar_url || "/avatar.png"}
+              src={user.user_metadata?.avatar_url ? user.user_metadata.avatar_url : undefined}
               alt={username}
             />
             <AvatarFallback>{username?.charAt(0).toUpperCase()}</AvatarFallback>
