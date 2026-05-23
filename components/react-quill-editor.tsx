@@ -2,11 +2,15 @@
 
 import React, { useState } from "react"
 import dynamic from "next/dynamic"
-import MDEditor from "@uiw/react-md-editor"
 
 // Dynamically import MDEditor to avoid SSR issues
 const MDEditorNoSSR = dynamic(
   () => import("@uiw/react-md-editor").then((mod) => mod.default),
+  { ssr: false }
+)
+
+const Markdown = dynamic(
+  () => import("@uiw/react-md-editor").then((mod) => mod.default.Markdown),
   { ssr: false }
 )
 
@@ -33,6 +37,7 @@ export function RichEditor({
       <div className="border rounded-t-lg border-b-0 bg-background">
         <div className="flex items-center gap-2 p-4">
           <button
+            type="button"
             className={`px-3 py-1.5 text-sm rounded-md ${
               isPreviewMode
                 ? "bg-primary text-primary-foreground"
@@ -49,19 +54,22 @@ export function RichEditor({
       <div style={{ height }} className="border rounded-lg overflow-hidden">
         {isPreviewMode ? (
           // Preview mode
-          <div className="h-full overflow-y-auto">
-            <MDEditor.Markdown source={value || placeholder} />
+          <div
+            className="h-full overflow-y-auto"
+            onClick={(e) => console.log('Preview mode clicked:', e)}
+          >
+            <Markdown source={value || undefined} />
           </div>
         ) : (
           // Edit mode
           <div style={{ height: `${height}px` }}>
             <MDEditorNoSSR
               value={value || ""}
-              onChange={onChange}
-              placeholder={placeholder}
+              onChange={(val) => onChange(val || "")}
               height={height}
-              visibledragbar={false}
+              visibleDragbar={false}
               textareaProps={{
+                placeholder: placeholder,
                 style: {
                   fontSize: 14,
                   lineHeight: 1.6,

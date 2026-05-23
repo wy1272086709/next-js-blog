@@ -154,7 +154,9 @@
     "saving": "Saving...",
     "updatePost": "Update post",
     "publishPost": "Publish post",
-    "cancel": "Cancel"
+    "cancel": "Cancel",
+    "enterContentFirst": "Please enter content first",
+    "generateSummary": "Generate AI Summary"
   },
   "dateFormat": {
     "yearMonthDay": "MMM d, yyyy",
