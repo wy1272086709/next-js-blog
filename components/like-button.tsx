@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useOptimistic, useEffect } from "react"
+import { useState, useEffect, useCallback } from "react"
 import { Button } from "@/components/ui/button"
 import { Heart } from "lucide-react"
 import { cn } from "@/lib/utils"
@@ -30,11 +30,6 @@ export function LikeButton({
     liked: initialHasLiked,
   })
 
-  // 乐观更新：基于实际状态，在 transition 期间显示中间状态
-  const [optimisticState, setOptimisticState] = useOptimistic(
-    likeState,
-    (state, newState: typeof likeState) => newState
-  )
 
   // 客户端获取当前用户（用于未登录时跳转登录页）
   useEffect(() => {
@@ -47,7 +42,7 @@ export function LikeButton({
     setLikeState({ count: initialLikeCount, liked: initialHasLiked })
   }, [initialLikeCount, initialHasLiked])
 
-  const handleLike = () => {
+  const handleLike = useCallback((event: React.MouseEvent<HTMLButtonElement>) => {
     console.log("点击了点赞按钮，当前用户信息:", user)
     // 未登陆，则跳转至登录页
     if (!user) {
@@ -58,12 +53,31 @@ export function LikeButton({
     // 保存当前状态，用于失败时回滚
     const previousState = { ...likeState }
 
-    // 立即计算乐观更新并触发 UI 更新
-    const optimisticNew = {
+    // 立即更新本地状态，触发 UI 更新
+    const newState = {
       count: likeState.liked ? likeState.count - 1 : likeState.count + 1,
       liked: !likeState.liked,
     }
-    setOptimisticState(optimisticNew)
+    setLikeState(newState)
+
+    // 添加视觉反馈
+    const button = document.activeElement as HTMLButtonElement
+    if (button) {
+      // 使用CSS transform实现更流畅的动画
+      button.style.transform = 'scale(0.95)'
+      setTimeout(() => {
+        button.style.transform = 'scale(1)'
+      }, 150)
+
+      // 心跳动画
+      const heart = button.querySelector('svg')
+      if (heart) {
+        heart.style.animation = 'none'
+        setTimeout(() => {
+          heart.style.animation = 'pulse 0.3s ease-in-out'
+        }, 10)
+      }
+    }
 
     // 在 background 中执行实际的 API 调用
     ;(async () => {
@@ -74,7 +88,6 @@ export function LikeButton({
 
         if (response.status === 401) {
           // 未登录：回滚到之前的状态
-          setOptimisticState(previousState)
           setLikeState(previousState)
           router.push(getPathname({ href: "/auth/login", locale: "" }))
           return
@@ -83,7 +96,6 @@ export function LikeButton({
         if (!response.ok) {
           const error = await response.json()
           // 服务器错误：回滚到之前的状态
-          setOptimisticState(previousState)
           setLikeState(previousState)
           toast({
             title: t("error"),
@@ -96,16 +108,9 @@ export function LikeButton({
         const data = await response.json()
         // 成功：用服务器返回的真实数据更新实际状态
         setLikeState({ count: data.count, liked: data.liked })
-        setOptimisticState({ count: data.count, liked: data.liked })
-
-        toast({
-          title: data.liked ? t("liked") : t("unliked"),
-          duration: 2000,
-        })
       } catch (error) {
         console.error("点赞失败:", error)
         // 网络错误：回滚到之前的状态
-        setOptimisticState(previousState)
         setLikeState(previousState)
         toast({
           title: t("error"),
@@ -114,7 +119,7 @@ export function LikeButton({
         })
       }
     })()
-  }
+  }, [user, postId, likeState, t, router])
 
   return (
     <Button
@@ -122,15 +127,17 @@ export function LikeButton({
       size="sm"
       onClick={handleLike}
       disabled={false}
-      className="gap-2 bg-transparent"
+      className="gap-2 bg-transparent transition-transform duration-100"
     >
       <Heart
         className={cn(
-          "h-4 w-4",
-          optimisticState.liked && "fill-red-500 text-red-500"
+          "h-4 w-4 transition-colors duration-200",
+          likeState.liked ? "fill-red-500 text-red-500" : "text-gray-500"
         )}
       />
-      {optimisticState.count}
+      <span className="transition-all duration-200">
+        {likeState.count}
+      </span>
     </Button>
   )
 }

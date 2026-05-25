@@ -75,7 +75,7 @@ export default async function PostPage({ params }: Props) {
     likeCount = typeof cachedCount === "string" ? parseInt(cachedCount, 10) : Number(cachedCount)
   } else {
     const { count } = await supabase
-      .from("likes")
+      .from("post_likes")
       .select("*", { count: "exact", head: true })
       .eq("post_id", id)
     likeCount = count ?? 0
@@ -96,7 +96,7 @@ export default async function PostPage({ params }: Props) {
       hasLiked = true
     } else {
       const { data: like } = await supabase
-        .from("likes")
+        .from("post_likes")
         .select("id")
         .eq("post_id", id)
         .eq("user_id", user.id)

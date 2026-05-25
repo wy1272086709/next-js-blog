@@ -1,6 +1,16 @@
 @import 'tailwindcss';
 @import 'tw-animate-css';
 
+/* 心跳动画 */
+@keyframes pulse {
+  0%, 100% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.2);
+  }
+}
+
 @custom-variant dark (&:is(.dark *));
 
 :root {
