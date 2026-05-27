@@ -117,7 +117,9 @@
     "operationFailed": "操作失败",
     "liked": "已点赞",
     "unliked": "已取消点赞",
-    "networkError": "网络错误，请稍后重试"
+    "networkError": "网络错误，请稍后重试",
+    "throttleTitle": "操作太频繁",
+    "throttleDescription": "请稍后再试，不要太频繁地点赞"
   },
   "DeletePostButton": {
     "delete": "删除",

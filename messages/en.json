@@ -108,6 +108,7 @@
     "cancelReply": "Cancel",
     "replyTo": "Reply to {name}...",
     "user": "user",
+    "commentsTitle": "Comments",
     "noComments": "No comments yet. Be the first!",
     "anonymousUser": "Anonymous"
   },
@@ -116,7 +117,9 @@
     "operationFailed": "Operation failed",
     "liked": "Liked",
     "unliked": "Unliked",
-    "networkError": "Network error, please try again later"
+    "networkError": "Network error, please try again later",
+    "throttleTitle": "Too frequent",
+    "throttleDescription": "Please wait before liking again"
   },
   "DeletePostButton": {
     "delete": "Delete",

@@ -5,7 +5,6 @@ import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { useTranslations } from "next-intl"
 import { useRouter, getPathname } from "@/i18n/navigation"
-import { toast } from "@/hooks/use-toast"
 
 export function AuthExample() {
   const { user, loading, signOut } = useAuthWithListener()
@@ -70,9 +69,16 @@ export function AuthExample() {
             onClick={async () => {
               try {
                 await signOut()
-                toast.success(t("signedOut"))
+                const { toast } = require("@/components/ui/use-toast")
+                toast({
+                  title: t("signedOut"),
+                })
               } catch (error) {
-                toast.error(t("signOutError"))
+                const { toast } = require("@/components/ui/use-toast")
+                toast({
+                  title: t("signOutError"),
+                  variant: "destructive",
+                })
               }
             }}
             variant="outline"

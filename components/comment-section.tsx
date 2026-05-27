@@ -88,9 +88,7 @@ export function CommentSection({ postId, initialUser }: CommentSectionProps) {
           clientSupabase
             .from('comment_likes')
             .select('id, comment_id, user_id')
-        ])
-        console.log('Fetched comments:', commentsResult.data)
-        console.log('Fetched likes:', likesResult.data)
+        ]);
         if (commentsResult.error) {
           setLoading(false)
           console.error('Error fetching comments:', commentsResult.error)

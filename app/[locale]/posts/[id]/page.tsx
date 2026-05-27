@@ -14,30 +14,6 @@ import remarkGfm from "remark-gfm"
 import rehypeHighlight from "rehype-highlight"
 import { CommentSection } from "@/components/comment-section"
 
-function CommentSectionWrapper({ postId, user, supabase }: {
-  postId: string;
-  user: any;
-  supabase: any
-}) {
-  return (
-    <div>
-      <div className="hidden">
-        <CommentSection
-          postId={postId}
-          initialUser={user}
-          supabase={supabase}
-        />
-      </div>
-      <div className="relative">
-        <CommentSection
-          postId={postId}
-          initialUser={user}
-          supabase={supabase}
-        />
-      </div>
-    </div>
-  )
-}
 import { routing } from "@/i18n/routing"
 
 const REDIS_TIMEOUT_MS = 3000
@@ -111,12 +87,12 @@ export default async function PostPage({ params }: Props) {
   const userLikeKey = user ? `post:${id}:user:${user.id}:liked` : null
 
   const [cachedLikeStatus, _view] = await Promise.all([
-    userLikeKey ? withRedisTimeout(() => redis.exists(userLikeKey)) : Promise.resolve(null),
+    userLikeKey ? withRedisTimeout(() => redis.get(userLikeKey)) : Promise.resolve(null),
     supabase.from("posts").update({ view_count: (post.view_count || 0) + 1 }).eq("id", id),
   ])
 
   if (user && userLikeKey) {
-    if (cachedLikeStatus === true) {
+    if (cachedLikeStatus === "1") {
       hasLiked = true
     } else {
       const { data: like } = await supabase
@@ -135,7 +111,7 @@ export default async function PostPage({ params }: Props) {
   // 评论总数将在客户端计算，以避免额外的API调用
   const author = post.profiles as { username: string; avatar_url: string } | null
   const category = post.categories as { name: string; slug: string } | null
-
+  console.log("like count:", likeCount, "hasLiked:", hasLiked, "user:", user)
   return (
     <article className="pl-[24px] pr-[24px] py-10">
       {category && (

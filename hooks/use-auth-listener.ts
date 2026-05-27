@@ -4,7 +4,6 @@ import { useEffect, useCallback } from "react"
 import { createClient } from "@/lib/supabase/client"
 import { useAuth } from "@/lib/auth-context"
 import { useRouter, getPathname } from "@/i18n/navigation"
-import { toast } from "sonner"
 
 export function useAuthListener() {
   const { user } = useAuth()
@@ -17,7 +16,12 @@ export function useAuthListener() {
 
     // 如果是认证错误（如 401），登出用户
     if (error?.status === 401 || error?.code === 'unauthorized') {
-      toast.error("登录已过期，请重新登录")
+      const { toast } = require("@/components/ui/use-toast")
+      toast({
+        title: "登录已过期",
+        description: "请重新登录",
+        variant: "destructive",
+      })
       await supabase.auth.signOut()
       router.push(getPathname({ href: "/auth/login", locale: "zh-CN" }))
     }

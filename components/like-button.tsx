@@ -4,7 +4,7 @@ import { useState, useEffect, useCallback, useRef } from "react"
 import { Button } from "@/components/ui/button"
 import { Heart } from "lucide-react"
 import { cn } from "@/lib/utils"
-import { useToast } from "@/hooks/use-toast"
+import { useToast } from "@/components/ui/use-toast"
 import { createClient } from "@/lib/supabase/client"
 import type { User } from "@supabase/supabase-js"
 import { useTranslations } from "next-intl"
@@ -53,6 +53,13 @@ export function LikeButton({
 
     // 检查是否在节流时间内
     if (isThrottled.current) {
+      // 给用户反馈，提示不要频繁点赞
+      toast({
+        title: t("throttleTitle"),
+        description: t("throttleDescription"),
+        variant: "default",
+        duration: 2000,
+      })
       return
     }
 
@@ -60,7 +67,7 @@ export function LikeButton({
     isThrottled.current = true
     setTimeout(() => {
       isThrottled.current = false
-    }, 2000) // 1秒内不能重复点击
+    }, 1500) // 1秒内不能重复点击
 
     // 保存当前状态，用于失败时回滚
     const previousState = { ...likeState }
