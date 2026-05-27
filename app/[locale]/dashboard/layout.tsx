@@ -2,7 +2,6 @@ import type React from "react"
 import { redirect } from "@/i18n/navigation"
 import { createClient } from "@/lib/supabase/server"
 import { DashboardSidebar } from "@/components/dashboard-sidebar"
-import { useLocale } from "next-intl"
 
 export default async function DashboardLayout({
   children,

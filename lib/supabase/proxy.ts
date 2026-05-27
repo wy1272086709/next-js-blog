@@ -28,7 +28,7 @@ export async function updateSession(request: NextRequest) {
   const {
     data: { user },
   } = await supabase.auth.getUser();
-
+  console.log("当前用户信息:proxy.ts:", user)
   // 保护个人中心路由（支持 locale 前缀如 /zh-CN/dashboard）
   const pathname = request.nextUrl.pathname
   const localeMatch = pathname.match(/^\/(zh-CN|en)\/dashboard/)

@@ -38,42 +38,47 @@ const getDashboardStats = unstable_cache(
     // 使用不依赖 cookies 的客户端
     const supabase = createSupabaseServerClient()
 
-    // 单次查询获取所有统计数据
-    const { data: posts } = await supabase
-      .from("posts")
-      .select(`
-        id,
-        title,
-        excerpt,
-        published,
-        created_at,
-        updated_at,
-        view_count,
-        category_id (
-          name,
-          slug
-        )
-      `)
-      .eq("author_id", userId)
-      .order("created_at", { ascending: false })
+    // 并行执行所有数据库查询
+    const [postsResult, profileResult, likesResult] = await Promise.all([
+      supabase
+        .from("posts")
+        .select(`
+          id,
+          title,
+          excerpt,
+          published,
+          created_at,
+          updated_at,
+          view_count,
+          category_id (
+            name,
+            slug
+          )
+        `)
+        .eq("author_id", userId)
+        .order("created_at", { ascending: false }),
 
-    // 获取用户名和头像
-    const { data: profile } = await supabase
-      .from("profiles")
-      .select("username, avatar_url")
-      .eq("id", userId)
-      .single()
+      supabase
+        .from("profiles")
+        .select("username, avatar_url")
+        .eq("id", userId)
+        .single(),
 
-    // 获取点赞数 - 使用更高效的方式
-    const { data: allLikes } = await supabase
-      .from("likes")
-      .select("post_id")
-      .in("post_id", posts?.map((p: any) => p.id) || [])
+      // 获取该用户所有文章的点赞总数
+      supabase
+        .from("likes")
+        .select("post_id", { count: "exact" })
+        .eq("user_id", userId)
+    ])
+
+    const { data: posts } = postsResult
+    const { data: profile } = profileResult
+    const { count: totalLikes } = likesResult
 
     const stats = {
       postCount: posts?.length || 0,
       totalViews: posts?.reduce((sum: number, post: any) => sum + (post.view_count || 0), 0) || 0,
-      totalLikes: allLikes?.length || 0,
+      totalLikes: totalLikes || 0,
       username: profile?.username || null,
       avatarUrl: profile?.avatar_url || null,
       recentPosts: posts?.slice(0, 3) || []
@@ -95,8 +100,12 @@ export default async function DashboardPage({ params }: Props) {
   const {
     data: { user },
   } = await supabase.auth.getUser()
+  console.log("当前用户信息:page.ts:", user)
 
-  if (!user) redirect("/auth/login")
+  // 检查用户是否存在以及 user.id 是否存在
+  if (!user || !user.id) {
+    redirect({ href: "/auth/login", locale })
+  }
 
   // 使用缓存函数获取数据
   const stats = await getDashboardStats(user.id!)

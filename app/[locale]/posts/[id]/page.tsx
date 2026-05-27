@@ -13,6 +13,31 @@ import ReactMarkdown from "react-markdown"
 import remarkGfm from "remark-gfm"
 import rehypeHighlight from "rehype-highlight"
 import { CommentSection } from "@/components/comment-section"
+
+function CommentSectionWrapper({ postId, user, supabase }: {
+  postId: string;
+  user: any;
+  supabase: any
+}) {
+  return (
+    <div>
+      <div className="hidden">
+        <CommentSection
+          postId={postId}
+          initialUser={user}
+          supabase={supabase}
+        />
+      </div>
+      <div className="relative">
+        <CommentSection
+          postId={postId}
+          initialUser={user}
+          supabase={supabase}
+        />
+      </div>
+    </div>
+  )
+}
 import { routing } from "@/i18n/routing"
 
 const REDIS_TIMEOUT_MS = 3000
@@ -85,10 +110,9 @@ export default async function PostPage({ params }: Props) {
   let hasLiked = false
   const userLikeKey = user ? `post:${id}:user:${user.id}:liked` : null
 
-  const [cachedLikeStatus, _view, commentResult] = await Promise.all([
+  const [cachedLikeStatus, _view] = await Promise.all([
     userLikeKey ? withRedisTimeout(() => redis.exists(userLikeKey)) : Promise.resolve(null),
     supabase.from("posts").update({ view_count: (post.view_count || 0) + 1 }).eq("id", id),
-    supabase.from("comments").select("*", { count: "exact", head: true }).eq("post_id", id),
   ])
 
   if (user && userLikeKey) {
@@ -108,7 +132,7 @@ export default async function PostPage({ params }: Props) {
     }
   }
 
-  const { count: commentCount } = commentResult
+  // 评论总数将在客户端计算，以避免额外的API调用
   const author = post.profiles as { username: string; avatar_url: string } | null
   const category = post.categories as { name: string; slug: string } | null
 
@@ -138,7 +162,7 @@ export default async function PostPage({ params }: Props) {
             </span>
             <span className="flex items-center gap-1">
               <MessageSquare className="h-4 w-4" />
-              {commentCount || 0} {t("commentsCount")}
+              <span className="comment-count">0</span> {t("commentsCount")}
             </span>
           </div>
         </div>
@@ -149,12 +173,10 @@ export default async function PostPage({ params }: Props) {
           {post.content || ""}
         </ReactMarkdown>
       </div>
-      <div className="mt-12 border-t pt-8">
-        <h2 className="text-xl font-bold mb-6">
-          {t("commentsTitle")} ({commentCount || 0})
-        </h2>
-        <CommentSection postId={id} />
-      </div>
+      <CommentSection
+        postId={id}
+        initialUser={user}
+      />
     </article>
   )
 }

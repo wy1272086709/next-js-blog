@@ -108,6 +108,7 @@
     "cancelReply": "取消回复",
     "replyTo": "回复 {name}...",
     "user": "用户",
+    "commentsTitle": "评论",
     "noComments": "暂无评论，快来发表第一条评论吧！",
     "anonymousUser": "匿名用户"
   },
