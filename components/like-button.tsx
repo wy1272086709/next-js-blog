@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect, useCallback } from "react"
+import { useState, useEffect, useCallback, useRef } from "react"
 import { Button } from "@/components/ui/button"
 import { Heart } from "lucide-react"
 import { cn } from "@/lib/utils"
@@ -23,7 +23,8 @@ export function LikeButton({
   const router = useRouter()
   const { toast } = useToast()
   const t = useTranslations("LikeButton")
-  
+  const isThrottled = useRef(false)
+
   // 实际状态：从 props 初始化，后续由服务器响应更新
   const [likeState, setLikeState] = useState({
     count: initialLikeCount,
@@ -49,6 +50,17 @@ export function LikeButton({
       router.push(getPathname({ href: "/auth/login", locale: "" }))
       return
     }
+
+    // 检查是否在节流时间内
+    if (isThrottled.current) {
+      return
+    }
+
+    // 设置节流标记
+    isThrottled.current = true
+    setTimeout(() => {
+      isThrottled.current = false
+    }, 2000) // 1秒内不能重复点击
 
     // 保存当前状态，用于失败时回滚
     const previousState = { ...likeState }
