@@ -41,8 +41,9 @@ export function useMarkdownStream() {
 
   // 流式处理的核心逻辑
   const processStream = useCallback(async (prompt: string, resumeFrom: string | null = null) => {
+    // 清空状态
     setRaw('');
-    bufferRef.current = resumeFrom || '';
+    bufferRef.current = '';
     lastContentRef.current = resumeFrom || '';
     setIsStreaming(true);
     setIsPaused(false);
@@ -56,7 +57,7 @@ export function useMarkdownStream() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           content: prompt,
-          resumeFrom: resumeFrom // 告诉服务端是否从某个内容继续
+          resumeFrom: resumeFrom // 发送恢复标记
         }),
         signal: abortController.current.signal
       });
@@ -122,12 +123,18 @@ export function useMarkdownStream() {
 
   const startStream = useCallback(async (prompt: string) => {
     if (!prompt || isStreaming) return;
-    await processStream(prompt, isPaused ? lastContentRef.current : null);
+    // 如果是暂停后恢复，发送已生成的内容
+    const resumeData = isPaused ? lastContentRef.current : null;
+    await processStream(prompt, resumeData);
   }, [isStreaming, isPaused, processStream]);
 
   const discardStream = useCallback(() => {
     if (abortController.current) {
-      abortController.current.abort();
+      try {
+        abortController.current.abort();
+      } catch (err) {
+        console.error('取消请求时出错:', err);
+      }
     }
     setIsStreaming(false);
     setIsPaused(false);
@@ -141,7 +148,11 @@ export function useMarkdownStream() {
       // 保存当前内容
       lastContentRef.current = bufferRef.current;
       // 取消当前的 fetch 请求
-      abortController.current.abort();
+      try {
+        abortController.current.abort();
+      } catch (err) {
+        console.error('取消请求时出错:', err);
+      }
       setIsPaused(true);
       setIsStreaming(false);
     }
@@ -149,10 +160,11 @@ export function useMarkdownStream() {
 
   const resumeStream = useCallback(async () => {
     if (isPaused) {
-      // 从上次保存的内容继续
+      // 获取之前的内容
       const lastContent = lastContentRef.current;
       if (lastContent) {
-        setRaw(lastContent);
+        // 重新开始生成，但发送恢复标记
+        // 注意：这里我们重新生成，而不是继续，因为runChainStream不支持继续
         await processStream(lastContent, lastContent);
       }
     }

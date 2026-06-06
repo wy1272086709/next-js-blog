@@ -162,6 +162,7 @@
     "generateSummary": "Generate AI Summary",
     "polish": "Polish",
     "polishDescription": "AI is polishing your content, please wait...",
+    "polishing": "Polishing...",
     "discardPolish": "Discard Polish",
     "usePolished": "Use Polished Content",
     "pausePolish": "Pause Polish",

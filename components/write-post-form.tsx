@@ -14,7 +14,9 @@ import { Card, CardContent } from "@/components/ui/card"
 import { Loader2 } from "lucide-react"
 import { RichEditor } from "@/components/react-quill-editor"
 import { CollapsibleMarkdown } from "@/components/collapsible-markdown"
-import { useMarkdownStream } from '@/hooks/use-markdown-preview';
+import { useMarkdownStream } from '@/hooks/use-markdown-preview'
+import { usePostMutation } from '@/hooks/use-post-mutation'
+import { SuccessToast } from "./ui/success-toast"
 
 interface Category {
   id: string
@@ -45,9 +47,10 @@ export function WritePostForm({
   const [excerpt, setExcerpt] = useState(post?.excerpt || "")
   const [categoryId, setCategoryId] = useState(post?.category_id || "")
   const [published, setPublished] = useState(post?.published ?? true)
-  const [isLoading, setIsLoading] = useState(false)
   const [isGeneratingSummary, setIsGeneratingSummary] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [showSuccessToast, setShowSuccessToast] = useState(false)
+  const [successMessage, setSuccessMessage] = useState('')
   const [hasSubmitted, setHasSubmitted] = useState(false)
   const [useAIPolish, setUseAIPolish] = useState(false)
   const {
@@ -128,56 +131,62 @@ export function WritePostForm({
 
   const router = useRouter();
   const t = useTranslations("WritePostForm");
+  const mutation = usePostMutation();
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
     setHasSubmitted(true)
-    setIsLoading(true)
-    setError(null)
 
-    const supabase = createClient()
-
-    try {
-      if (!content.trim()) {
-        setError(t("enterContentFirst"))
-        setHasSubmitted(true)
-        return
-      }
-      const postData = {
-        title,
-        content,
-        excerpt: excerpt || content.substring(0, 150),
-        category_id: categoryId || null,
-        published,
-        author_id: userId,
-        updated_at: new Date().toISOString(),
-      }
-
-      if (post) {
-        const { error } = await supabase.from("posts").update(postData).eq("id", post.id)
-
-        if (error) throw error
-      } else {
-        const { error } = await supabase.from("posts").insert(postData)
-
-        if (error) throw error
-      }
-      const path = getPathname({
-        href: "/dashboard/posts",
-        locale: '',
-      });
-      router.push(path)
-      router.refresh()
-      setError(null)
-    } catch (error) {
-      setError(error instanceof Error ? error.message : t("saveFailed"))
-    } finally {
-      setIsLoading(false)
+    if (!content.trim()) {
+      setError(t("enterContentFirst"))
+      return
     }
+
+    const postData = {
+      title,
+      content,
+      excerpt: excerpt || content.substring(0, 150),
+      category_id: categoryId || null,
+      published,
+      author_id: userId,
+    }
+
+    mutation.mutate(
+      post
+        ? { ...postData, id: post.id }
+        : postData,
+      {
+        onSuccess: () => {
+          // Navigate after successful mutation
+          const path = getPathname({
+            href: "/dashboard/posts",
+            locale: '',
+          })
+          router.push(path)
+        },
+      }
+    )
+  }
+
+  // Handle loading state from mutation
+  if (mutation.isPending) {
+    return (
+      <div className="flex items-center justify-center p-8">
+        <Loader2 className="h-8 w-8 animate-spin" />
+        <span className="ml-2">保存中...</span>
+      </div>
+    )
   }
 
   return (
     <div>
+      {/* Success Toast */}
+      {showSuccessToast && (
+        <SuccessToast
+          message={successMessage}
+          onClose={() => setShowSuccessToast(false)}
+        />
+      )}
       <form onSubmit={handleSubmit}>
         <Card>
           <CardContent className="p-6 space-y-6">
@@ -279,8 +288,8 @@ export function WritePostForm({
                   <Button type="button" variant="outline" onClick={discardPolishedContent} className="cursor-pointer">
                     {t("discardPolish")}
                   </Button>
-                  <Button type="button" onClick={usePolishedContent} disabled={!source && !isStreaming} className="cursor-pointer">
-                    {t("usePolished")}
+                  <Button type="button" onClick={usePolishedContent} disabled={!source || isStreaming} className="cursor-pointer">
+                    {isStreaming ? t("polishing") : t("usePolished")}
                   </Button>
                 </div>
               </div>
@@ -323,8 +332,8 @@ export function WritePostForm({
             {error && <p className="text-sm text-destructive">{error}</p>}
 
             <div className="flex gap-4">
-              <Button type="submit" disabled={isLoading} className="cursor-pointer">
-                {isLoading ? t("saving") : post ? t("updatePost") : t("publishPost")}
+              <Button type="submit" disabled={mutation.isPending} className="cursor-pointer">
+                {mutation.isPending ? t("saving") : post ? t("updatePost") : t("publishPost")}
               </Button>
               <Button type="button" variant="outline" onClick={() => router.back()} className="cursor-pointer">
                 {t("cancel")}

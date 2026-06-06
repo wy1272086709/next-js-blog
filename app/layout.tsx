@@ -7,6 +7,7 @@ import { routing } from "@/i18n/routing"
 import { getRequestConfig } from "next-intl/server"
 import { ThemeProvider } from "@/components/theme-provider"
 import { Toaster } from "@/components/ui/toaster"
+import { Providers } from "./providers"
 import "./globals.css"
 
 const _geist = Geist({ subsets: ["latin"] })
@@ -49,7 +50,9 @@ export default async function RootLayout({
           enableSystem
           disableTransitionOnChange
         >
-          {children}
+          <Providers>
+            {children}
+          </Providers>
         </ThemeProvider>
         <Toaster />
         <Analytics />

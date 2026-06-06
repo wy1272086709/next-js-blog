@@ -162,6 +162,7 @@
     "generateSummary": "AI生成摘要",
     "polish": "润色",
     "polishDescription": "AI 正在为您润色文章，请稍候...",
+    "polishing": "润色中...",
     "discardPolish": "放弃润色",
     "usePolished": "使用润色后内容",
     "pausePolish": "暂停润色",

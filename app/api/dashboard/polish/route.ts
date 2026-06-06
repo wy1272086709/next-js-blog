@@ -25,28 +25,49 @@ export async function POST(req: NextRequest): Promise<Response> {
         let isControllerClosed = false;
 
         const sendSSEData = (data: SSEData): void => {
+          // 快速检查
           if (isControllerClosed) return;
-          if (controller.desiredSize === null) {
-            isControllerClosed = true;
-            return;
-          }
 
-          const sseData = `data: ${JSON.stringify(data)}\n\n`;
-          controller.enqueue(encoder.encode(sseData));
+          try {
+            // 检查控制器是否仍然活跃
+            if (controller.desiredSize === null || controller.desiredSize <= 0) {
+              isControllerClosed = true;
+              return;
+            }
+
+            const sseData = `data: ${JSON.stringify(data)}\n\n`;
+            controller.enqueue(encoder.encode(sseData));
+          } catch (err) {
+            // 立即标记为已关闭，防止继续尝试
+            isControllerClosed = true;
+            console.error('发送SSE数据失败:', err);
+            // 不重新抛出错误，让流程自然结束
+          }
         };
 
         const sendHeartbeat = (): void => {
           if (Date.now() - lastChunkTime > 5000 && !isControllerClosed) {
-            controller.enqueue(encoder.encode(': ping\n\n'));
-            lastChunkTime = Date.now();
+            try {
+              controller.enqueue(encoder.encode(': ping\n\n'));
+              lastChunkTime = Date.now();
+            } catch (err) {
+              console.error('发送心跳失败:', err);
+              isControllerClosed = true;
+            }
           }
         };
 
         const closeStream = (): void => {
+          // 使用原子操作检查和设置
           if (!isControllerClosed) {
-            sendSSEData({ status: 'completed' });
-            controller.close();
             isControllerClosed = true;
+            try {
+              sendSSEData({ status: 'completed' });
+              controller.close();
+            } catch (err) {
+              console.error('关闭流时出错:', err);
+              // 即使出错也确保控制器被关闭
+            }
           }
         };
 
@@ -65,13 +86,24 @@ export async function POST(req: NextRequest): Promise<Response> {
           }
 
           // 逐 token 流式推送
-          for await (const chunk of llmStream) {
-            lastChunkTime = Date.now();
+          try {
+            for await (const chunk of llmStream) {
+              // 每次迭代都检查控制器状态
+              if (isControllerClosed) break;
 
-            const content = chunk || '';
-            if (content && !isControllerClosed) {
-              sendSSEData({ chunk });
-              sendHeartbeat();
+              lastChunkTime = Date.now();
+
+              const content = chunk || '';
+              if (content && !isControllerClosed) {
+                sendSSEData({ chunk });
+                sendHeartbeat();
+              }
+            }
+          } catch (err) {
+            console.error('流式生成迭代错误:', err);
+            // 流式生成被中断是正常的（例如用户暂停）
+            if (!isControllerClosed) {
+              isControllerClosed = true;
             }
           }
 
