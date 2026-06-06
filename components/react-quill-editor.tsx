@@ -1,6 +1,6 @@
 "use client"
-
-import React, { useState } from "react"
+import { useEffect, useState } from "react"
+import remarkGfm from "remark-gfm"
 import dynamic from "next/dynamic"
 
 // Dynamically import MDEditor to avoid SSR issues
@@ -27,6 +27,7 @@ interface RichEditorProps {
   onChange: (value: string) => void
   placeholder?: string
   height?: number
+  preview?: boolean
   hasSubmitted?: boolean
 }
 
@@ -35,16 +36,19 @@ export function RichEditor({
   onChange,
   placeholder = "Start writing your post...",
   height = 500,
-  hasSubmitted = false
+  hasSubmitted = false,
+  preview = false
 }: RichEditorProps) {
   const [isPreviewMode, setIsPreviewMode] = useState(false)
-
+  useEffect(() => {
+    setIsPreviewMode(preview)
+  }, [preview])
   return (
     <div className="space-y-4">
       {/* Toolbar */}
-      <div className="border rounded-t-lg border-b-0 bg-background">
+      {!preview && <div className="border rounded-t-lg border-b-0 bg-background">
         <div className="flex items-center gap-2 p-4">
-          <button
+          { <button
             type="button"
             className={`px-3 py-1.5 text-sm rounded-md ${
               isPreviewMode
@@ -55,9 +59,10 @@ export function RichEditor({
           >
             {isPreviewMode ? "Edit" : "Preview"}
           </button>
+          }
         </div>
-      </div>
-
+      </div>}
+      
       {/* Editor/Preview Area */}
       <div style={{ height }} className="border rounded-lg overflow-hidden">
         {isPreviewMode ? (
@@ -66,7 +71,37 @@ export function RichEditor({
             className="h-full overflow-y-auto"
             onClick={(e) => console.log('Preview mode clicked:', e)}
           >
-            <Markdown source={value ? cleanMarkdown(value) : undefined} />
+            <Markdown 
+              remarkPlugins={[remarkGfm]}  
+              components={{
+                // 可选：自定义代码块样式 - 只处理真正的代码块
+                code({ node, className, children, ...props }) {
+                  // 检查是否是真正的代码块
+                  const isCodeBlock = className?.includes('language-') ||
+                                    props.lang ||
+                                    typeof children === 'string' &&
+                                    (children.includes('\n') || children.length > 100);
+
+                  if (isCodeBlock) {
+                    return (
+                      <pre className="bg-gray-900 text-gray-[#2754a3] p-4 rounded overflow-x-auto">
+                        <code className={className} {...props}>
+                          {children}
+                        </code>
+                      </pre>
+                    );
+                  }
+
+                  // 对于行内代码或其他情况，返回默认样式
+                  return (
+                    <code className={className || 'bg-gray-100 px-1 py-0.5 rounded text-sm'} {...props}>
+                      {children}
+                    </code>
+                  );
+                },
+              }}
+              source={value ? cleanMarkdown(value) : undefined} 
+            />
           </div>
         ) : (
           // Edit mode

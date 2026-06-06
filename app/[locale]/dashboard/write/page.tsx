@@ -25,7 +25,7 @@ export default async function WritePage({ params, searchParams }: Props) {
     data: { user },
   } = await supabase.auth.getUser()
 
-  if (!user) redirect("/auth/login")
+  if (!user) redirect({ href: "/auth/login", locale })
 
   const { data: categories } = await supabase
     .from("categories")
@@ -38,7 +38,7 @@ export default async function WritePage({ params, searchParams }: Props) {
       .from("posts")
       .select("*")
       .eq("id", edit)
-      .eq("author_id", user.id)
+      .eq("author_id", user?.id)
       .single()
     post = data
   }

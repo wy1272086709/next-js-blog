@@ -159,7 +159,18 @@
     "publishPost": "Publish post",
     "cancel": "Cancel",
     "enterContentFirst": "Please enter content first",
-    "generateSummary": "Generate AI Summary"
+    "generateSummary": "Generate AI Summary",
+    "polish": "Polish",
+    "polishDescription": "AI is polishing your content, please wait...",
+    "discardPolish": "Discard Polish",
+    "usePolished": "Use Polished Content",
+    "pausePolish": "Pause Polish",
+    "resumePolish": "Resume Polish",
+    "useAIPolishLabel": "Use AI Polish",
+    "polishPreviewTitle": "Polish Preview",
+    "polishContentPlaceholder": "Polished content will be displayed here",
+    "closePolishFeature": "Close polish feature",
+    "resetContentToOriginal": "Reset content to original"
   },
   "dateFormat": {
     "yearMonthDay": "MMM d, yyyy",

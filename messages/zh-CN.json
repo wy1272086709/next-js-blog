@@ -159,7 +159,18 @@
     "publishPost": "发布文章",
     "cancel": "取消",
     "enterContentFirst": "请先输入内容",
-    "generateSummary": "AI生成摘要"
+    "generateSummary": "AI生成摘要",
+    "polish": "润色",
+    "polishDescription": "AI 正在为您润色文章，请稍候...",
+    "discardPolish": "放弃润色",
+    "usePolished": "使用润色后内容",
+    "pausePolish": "暂停润色",
+    "resumePolish": "恢复润色",
+    "useAIPolishLabel": "使用AI润色",
+    "polishPreviewTitle": "润色预览",
+    "polishContentPlaceholder": "润色后的内容将显示在这里",
+    "closePolishFeature": "关闭润色功能",
+    "resetContentToOriginal": "重置内容为原始内容"
   },
   "dateFormat": {
     "yearMonthDay": "yyyy年M月d日",

@@ -111,7 +111,7 @@ export default async function PostPage({ params }: Props) {
   // 评论总数将在客户端计算，以避免额外的API调用
   const author = post.profiles as { username: string; avatar_url: string } | null
   const category = post.categories as { name: string; slug: string } | null
-  console.log("like count:", likeCount, "hasLiked:", hasLiked, "user:", user)
+  
   return (
     <article className="pl-[24px] pr-[24px] py-10">
       {category && (

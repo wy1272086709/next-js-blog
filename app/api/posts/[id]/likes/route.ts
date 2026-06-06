@@ -1,8 +1,8 @@
 import { NextRequest, NextResponse } from "next/server"
-import { createServerSideClient } from "@/lib/supabase/server"
+import { createClient } from "@/lib/supabase/server"
 
 export async function GET(request: NextRequest, { params }: { params: { id: string } }) {
-  const supabase = createServerSideClient()
+  const supabase = await createClient()
 
   try {
     const postId = params.id
@@ -32,8 +32,8 @@ export async function GET(request: NextRequest, { params }: { params: { id: stri
       created_at: like.created_at,
       user: like.profiles ? {
         id: like.profiles.id,
-        username: like.profiles.username,
-        avatar_url: like.profiles.avatar_url,
+        username: like.profiles?.username,
+        avatar_url: like.profiles?.avatar_url,
       } : null
     })) || []
 

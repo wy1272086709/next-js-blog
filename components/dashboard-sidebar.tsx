@@ -2,7 +2,7 @@
 
 import { usePathname } from "@/i18n/navigation"
 import { cn } from "@/lib/utils"
-import { LayoutDashboard, FileText, PenSquare, Settings } from "lucide-react"
+import { LayoutDashboard, FileText, PenSquare, Settings, Wand2 } from "lucide-react"
 import { useTranslations } from "next-intl"
 import { Link } from "@/i18n/navigation"
 
@@ -10,6 +10,7 @@ const sidebarKeys = [
   { href: "/dashboard", key: "overview", icon: LayoutDashboard },
   { href: "/dashboard/posts", key: "myPosts", icon: FileText },
   { href: "/dashboard/write", key: "writePost", icon: PenSquare },
+  // { href: "/dashboard/polish", key: "polishPost", icon: Wand2 },
   { href: "/dashboard/settings", key: "settings", icon: Settings },
 ] as const
 

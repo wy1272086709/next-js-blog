@@ -1,7 +1,7 @@
-import { createServerSideClient } from "@/lib/supabase/server"
+import { createClient } from "@/lib/supabase/server"
 
 export async function getPostLikes(postId: string) {
-  const supabase = createServerSideClient()
+  const supabase = await createClient()
 
   try {
     // 获取文章的点赞总数
@@ -42,7 +42,7 @@ export async function getPostLikes(postId: string) {
 }
 
 export async function getPostLikeUsers(postId: string) {
-  const supabase = createServerSideClient()
+  const supabase = await createClient()
 
   try {
     // 获取点赞该文章的用户列表

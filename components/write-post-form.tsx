@@ -1,7 +1,5 @@
 "use client"
-
 import type React from "react"
-
 import { useState } from "react"
 import { createClient } from "@/lib/supabase/client"
 import { useTranslations } from "next-intl"
@@ -15,6 +13,8 @@ import { Switch } from "@/components/ui/switch"
 import { Card, CardContent } from "@/components/ui/card"
 import { Loader2 } from "lucide-react"
 import { RichEditor } from "@/components/react-quill-editor"
+import { CollapsibleMarkdown } from "@/components/collapsible-markdown"
+import { useMarkdownStream } from '@/hooks/use-markdown-preview';
 
 interface Category {
   id: string
@@ -49,6 +49,16 @@ export function WritePostForm({
   const [isGeneratingSummary, setIsGeneratingSummary] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [hasSubmitted, setHasSubmitted] = useState(false)
+  const [useAIPolish, setUseAIPolish] = useState(false)
+  const {
+    source,
+    isStreaming,
+    isPaused,
+    startStream,
+    discardStream,
+    pauseStream,
+    resumeStream
+  } = useMarkdownStream();
 
   const generateSummary = async () => {
     if (!content.trim()) {
@@ -61,7 +71,7 @@ export function WritePostForm({
     setError(null)
 
     try {
-      // 使用带语言前缀的路径
+      // {t("useLanguagePrefixPath")}
       const pathname = window.location.pathname.startsWith('/zh-CN')
         ? '/api/zh-CN/dashboard'
         : '/api/en/dashboard';
@@ -79,11 +89,11 @@ export function WritePostForm({
       const data = await response.json()
 
       if (!response.ok) {
-        throw new Error(data.error || "摘要生成失败")
+        throw new Error(data.error || t("generateSummaryFailed"))
       }
 
       if (!data.result || typeof data.result !== 'string') {
-        throw new Error("返回的摘要格式不正确")
+        throw new Error(t("invalidResult"))
       }
 
       // 提取AI生成的摘要，如果太长则截取
@@ -95,7 +105,7 @@ export function WritePostForm({
       }
     } catch (error) {
       console.error('生成摘要错误:', error)
-      const errorMessage = error instanceof Error ? error.message : "生成摘要失败，请稍后重试"
+      const errorMessage = error instanceof Error ? error.message : t("generateSummaryFailedRetry")
       setError(errorMessage)
       // 如果AI生成失败，使用内容的前150个字符作为摘要
       setExcerpt(content.substring(0, 150))
@@ -103,9 +113,21 @@ export function WritePostForm({
       setIsGeneratingSummary(false)
     }
   }
-  const router = useRouter()
-  const t = useTranslations("WritePostForm")
 
+  const usePolishedContent = () => {
+    setContent(source)
+  }
+
+  const discardPolishedContent = () => {
+    // {t("closePolishFeature")}
+    setUseAIPolish(false)
+    // {t("resetContentToOriginal")}
+    setContent(post?.content || "")
+    discardStream()
+  }
+
+  const router = useRouter();
+  const t = useTranslations("WritePostForm");
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -155,93 +177,162 @@ export function WritePostForm({
   }
 
   return (
-    <form onSubmit={handleSubmit}>
-      <Card>
-        <CardContent className="p-6 space-y-6">
-          <div className="grid gap-2">
-            <Label htmlFor="title">{t("title")}</Label>
-            <Input
-              id="title"
-              placeholder={t("titlePlaceholder")}
-              value={title}
-              onChange={(e) => setTitle(e.target.value)}
-              required
-            />
-          </div>
-
-          <div className="grid gap-2">
-            <Label htmlFor="category">{t("category")}</Label>
-            <Select value={categoryId} onValueChange={setCategoryId}>
-              <SelectTrigger>
-                <SelectValue placeholder={t("categoryPlaceholder")} />
-              </SelectTrigger>
-              <SelectContent>
-                {categories.map((category) => (
-                  <SelectItem key={category.id} value={category.id}>
-                    {category.name}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-
-          <div className="grid gap-2">
-            <Label htmlFor="content">{t("content")}</Label>
-            <RichEditor
-              value={content}
-              onChange={setContent}
-              placeholder={t("contentPlaceholder")}
-              hasSubmitted={hasSubmitted}
-            />
-          </div>
-
-          <div className="grid gap-2">
-            <Label htmlFor="excerpt">{t("excerpt")}</Label>
-            <div className="flex gap-2">
-              <Textarea
-                id="excerpt"
-                placeholder={t("excerptPlaceholder")}
-                value={excerpt}
-                onChange={(e) => setExcerpt(e.target.value)}
-                rows={2}
-                className="flex-1"
+    <div>
+      <form onSubmit={handleSubmit}>
+        <Card>
+          <CardContent className="p-6 space-y-6">
+            <div className="grid gap-2">
+              <Label htmlFor="title">{t("title")}</Label>
+              <Input
+                id="title"
+                placeholder={t("titlePlaceholder")}
+                value={title}
+                onChange={(e) => setTitle(e.target.value)}
+                required
               />
-              <Button
-                type="button"
-                variant="outline"
-                size="sm"
-                onClick={generateSummary}
-                disabled={isGeneratingSummary || !content.trim()}
-                className="mt-6 h-10 shrink-0 mt-auto mb-auto"
-              >
-                {isGeneratingSummary ? (
-                  <Loader2 className="h-4 w-4 animate-spin" />
-                ) : (
-                  t("generateSummary")
-                )}
+            </div>
+
+            <div className="grid gap-2">
+              <Label htmlFor="category">{t("category")}</Label>
+              <Select value={categoryId} onValueChange={setCategoryId}>
+                <SelectTrigger>
+                  <SelectValue placeholder={t("categoryPlaceholder")} />
+                </SelectTrigger>
+                <SelectContent>
+                  {categories.map((category) => (
+                    <SelectItem key={category.id} value={category.id}>
+                      {category.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div className="grid gap-2">
+              <Label htmlFor="content">{t("content")}</Label>
+              <RichEditor
+                value={content}
+                onChange={setContent}
+                placeholder={t("contentPlaceholder")}
+                hasSubmitted={hasSubmitted}
+              />
+            </div>
+
+            <div className="grid gap-2">
+              <div className="flex items-center gap-2">
+                <Switch id="useAIPolish" checked={useAIPolish} onCheckedChange={setUseAIPolish} />
+                <Label htmlFor="useAIPolish">{t("useAIPolishLabel")}</Label>
+                { useAIPolish && (<Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => startStream(content.trim())}
+                  disabled={isStreaming}
+                  size="sm"
+                  className="cursor-pointer"
+                >
+                  {t("polish")}
+                </Button>) }
+              </div>
+            </div>
+
+            {useAIPolish && (
+              <div className="mt-4 optimize-preview">
+                <CollapsibleMarkdown
+                  title={t("polishPreviewTitle")}
+                  defaultCollapsed={false}
+                >
+                  <RichEditor
+                    value={source} // {t("useMarkdownStreamSource")}
+                    preview={true}
+                    onChange={() => {}} // {t("readOnlyMode")}
+                    placeholder={t("polishContentPlaceholder")}
+                    height={400}
+                    hasSubmitted={false}
+                  />
+                </CollapsibleMarkdown>
+
+                <div className="mt-4 flex gap-2">
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={isPaused ? resumeStream : pauseStream}
+                    disabled={!isStreaming}
+                    className="flex items-center gap-2 cursor-pointer"
+                  >
+                    {isPaused ? (
+                      <>
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                          <polygon points="5 3 19 12 5 21 5 3"></polygon>
+                        </svg>
+                        {t("resumePolish")}
+                      </>
+                    ) : (
+                      <>
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                          <rect x="6" y="4" width="4" height="16"></rect>
+                          <rect x="14" y="4" width="4" height="16"></rect>
+                        </svg>
+                        {t("pausePolish")}
+                      </>
+                    )}
+                  </Button>
+                  <Button type="button" variant="outline" onClick={discardPolishedContent} className="cursor-pointer">
+                    {t("discardPolish")}
+                  </Button>
+                  <Button type="button" onClick={usePolishedContent} disabled={!source && !isStreaming} className="cursor-pointer">
+                    {t("usePolished")}
+                  </Button>
+                </div>
+              </div>
+            )}
+
+            <div className="grid gap-2">
+              <Label htmlFor="excerpt">{t("excerpt")}</Label>
+              <div className="flex gap-2">
+                <Textarea
+                  id="excerpt"
+                  placeholder={t("excerptPlaceholder")}
+                  value={excerpt}
+                  onChange={(e) => setExcerpt(e.target.value)}
+                  rows={2}
+                  className="flex-1"
+                />
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={generateSummary}
+                  disabled={isGeneratingSummary || !content.trim()}
+                  className="mt-6 h-10 shrink-0 mt-auto mb-auto cursor-pointer"
+                >
+                  {isGeneratingSummary ? (
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                  ) : (
+                    t("generateSummary")
+                  )}
+                </Button>
+              </div>
+            </div>
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <Switch id="published" checked={published} onCheckedChange={setPublished} />
+                <Label htmlFor="published">{published ? t("publishNow") : t("saveDraft")}</Label>
+              </div>
+            </div>
+
+            {error && <p className="text-sm text-destructive">{error}</p>}
+
+            <div className="flex gap-4">
+              <Button type="submit" disabled={isLoading} className="cursor-pointer">
+                {isLoading ? t("saving") : post ? t("updatePost") : t("publishPost")}
+              </Button>
+              <Button type="button" variant="outline" onClick={() => router.back()} className="cursor-pointer">
+                {t("cancel")}
               </Button>
             </div>
-          </div>
-          
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <Switch id="published" checked={published} onCheckedChange={setPublished} />
-              <Label htmlFor="published">{published ? t("publishNow") : t("saveDraft")}</Label>
-            </div>
-          </div>
-
-          {error && <p className="text-sm text-destructive">{error}</p>}
-
-          <div className="flex gap-4">
-            <Button type="submit" disabled={isLoading}>
-              {isLoading ? t("saving") : post ? t("updatePost") : t("publishPost")}
-            </Button>
-            <Button type="button" variant="outline" onClick={() => router.back()}>
-              {t("cancel")}
-            </Button>
-          </div>
-        </CardContent>
-      </Card>
-    </form>
+          </CardContent>
+        </Card>
+      </form>
+    </div>
   )
 }
