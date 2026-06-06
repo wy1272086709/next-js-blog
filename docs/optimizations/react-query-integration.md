@@ -45,7 +45,7 @@ export function Providers({ children }: { children: React.ReactNode }) {
 
 ### 3. 自定义 Hooks
 
-#### `use-user-posts.ts` - 获取用户文章列表
+#### `use-user-posts.ts` - 获取用户文章列表（暂未使用）
 
 ```tsx
 'use client'
@@ -64,6 +64,8 @@ export function useUserPosts(userId: string, limit = 10, offset = 0) {
   })
 }
 ```
+
+> **注意**: 此 hook 目前未在项目中使用。当前的文章列表是通过服务器端组件直接查询 Supabase 获取的。
 
 #### `use-post-mutation.ts` - 创建/更新文章
 
@@ -99,7 +101,7 @@ export function usePostMutation() {
       }
     },
     onSuccess: (data, variables) => {
-      // Invalidate posts query to refetch
+      // Invalidate all user posts queries to refetch with all possible limit/offset combinations
       queryClient.invalidateQueries({
         queryKey: ['posts', 'user', variables.author_id],
       })
@@ -116,7 +118,15 @@ export function usePostMutation() {
 }
 ```
 
-### 4. 组件优化
+### 4. 实际使用情况说明
+
+目前的实现有以下特点：
+
+- **服务器端数据 fetching**: 文章列表主要通过服务器组件直接查询 Supabase 获取
+- **React Query 仅用于 mutations**: 只有创建/更新文章时使用了 React Query 的缓存失效机制
+- **缓存失效范围**: 使用 `['posts', 'user', userId]` 可以正确失效所有相关查询，因为当前没有使用分页
+
+### 5. 组件优化
 
 #### `write-post-form.tsx` 使用 React Query Mutation
 
