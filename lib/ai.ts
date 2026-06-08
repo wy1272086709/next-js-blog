@@ -12,7 +12,6 @@ export function getModel(options?: ChatOpenAIFields): ChatOpenAI {
     });
   }
   return new ChatOpenAI({
-    streaming: true,
     model: process.env.MODEL_NAME,
     apiKey: process.env.OPENAI_API_KEY,
     configuration: {
