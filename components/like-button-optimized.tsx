@@ -6,7 +6,7 @@ import { cn } from "@/lib/utils"
 import { useLikeMutation } from "@/hooks/use-like-mutation"
 import { useEffect } from "react"
 
-interface LikeButtonProps {
+interface LikeButtonOptimizedProps {
   postId: string
   initialLikeCount: number
   initialHasLiked: boolean
@@ -15,14 +15,14 @@ interface LikeButtonProps {
   onLikeChange?: (liked: boolean, count: number) => void
 }
 
-export function LikeButton({
+export function LikeButtonOptimized({
   postId,
   initialLikeCount,
   initialHasLiked,
   className,
   size = "sm",
   onLikeChange,
-}: LikeButtonProps) {
+}: LikeButtonOptimizedProps) {
   const {
     likeData,
     isPending,
@@ -50,10 +50,10 @@ export function LikeButton({
     event.preventDefault()
     handleLike()
   }
-  console.log('likeData', likeData)
+
   // 添加键盘支持
   const handleKeyDown = (event: React.KeyboardEvent<HTMLButtonElement>) => {
-    if (event.key === 'Enter') {
+    if (event.key === 'Enter' || event.key === ' ') {
       event.preventDefault()
       handleLike()
     }
@@ -122,3 +122,4 @@ export function LikeButton({
     </Button>
   )
 }
+

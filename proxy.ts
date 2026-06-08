@@ -1,4 +1,4 @@
-import { createServerClient } from "@supabase/ssr"
+import { createServerClientWithCookies } from "@/lib/supabase/server"
 import createMiddleware from "next-intl/middleware"
 import { routing } from "./i18n/routing"
 import { NextResponse, type NextRequest } from "next/server"
@@ -15,24 +15,21 @@ async function authMiddleware(request: NextRequest) {
   let supabaseResponse = NextResponse.next({
     request,
   });
-  const supabase = createServerClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-    {
-      cookies: {
-        getAll() {
-          return request.cookies.getAll()
-        },
-        setAll(cookiesToSet) {
-          cookiesToSet.forEach(({ name, value }) => request.cookies.set(name, value))
-          supabaseResponse = NextResponse.next({
-            request,
-          })
-          cookiesToSet.forEach(({ name, value, options }) => supabaseResponse.cookies.set(name, value, options))
-        },
-      },
-    },
-  );
+  // 创建一个特殊的cookie store，使用request.cookies
+  const cookieStore = {
+    getAll: () => request.cookies.getAll(),
+    setAll: (cookiesToSet: any[]) => {
+      cookiesToSet.forEach(({ name, value, options }) => {
+        request.cookies.set(name, value)
+        supabaseResponse.cookies.set(name, value, options)
+      })
+      supabaseResponse = NextResponse.next({
+        request,
+      })
+    }
+  }
+
+  const supabase = await createServerClientWithCookies(cookieStore)
 
   const {
     data: { user },

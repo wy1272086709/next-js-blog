@@ -18,6 +18,16 @@ class RedisClient {
    * 获取 Redis 客户端实例，如果未连接则自动连接
    */
   async getClient(): Promise<RedisClientType> {
+    // 如果连接已经断开，先清理客户端实例
+    if (this.client && !this.isConnected) {
+      try {
+        await this.client.disconnect();
+      } catch (err) {
+        console.error('Error disconnecting old Redis client:', err);
+      }
+      this.client = null;
+    }
+
     if (!this.client) {
       const url = process.env.REDIS_URL;
       const host = process.env.REDIS_HOST || 'localhost';
@@ -25,11 +35,34 @@ class RedisClient {
       const password = process.env.REDIS_PASSWORD;
 
       this.client = createClient(
-        url ? { url } : { socket: { host, port }, password }
+        url ? {
+          url,
+          socket: {
+            reconnectStrategy: (retries) => {
+              // 重连策略：最多重试5次，每次间隔时间递增
+              if (retries > 5) {
+                return false; // 停止重连
+              }
+              return Math.min(retries * 100, 3000); // 最多3秒
+            }
+          }
+        } : {
+          socket: {
+            host,
+            port,
+            reconnectStrategy: (retries) => {
+              if (retries > 5) {
+                return false;
+              }
+              return Math.min(retries * 100, 3000);
+            }
+          },
+          password
+        }
       );
 
       this.client.on('error', (err) => {
-        console.error('Redis Client Error', err);
+        console.error('Redis Client Error', err.message);
         this.isConnected = false;
       });
 
@@ -39,13 +72,28 @@ class RedisClient {
       });
 
       this.client.on('end', () => {
+        console.log('Redis Client Disconnected');
         this.isConnected = false;
+      });
+
+      this.client.on('reconnecting', () => {
+        console.log('Redis Client Reconnecting...');
+      });
+
+      this.client.on('ready', () => {
+        console.log('Redis Client Ready');
       });
     }
 
-    if (!this.isConnected) {
-      await this.client.connect();
-      this.isConnected = true;
+    try {
+      if (!this.isConnected) {
+        await this.client.connect();
+        this.isConnected = true;
+      }
+    } catch (err) {
+      console.error('Failed to connect to Redis:', err);
+      this.isConnected = false;
+      throw err;
     }
 
     return this.client;
@@ -65,25 +113,57 @@ class RedisClient {
   // ---------- 常用操作封装 ----------
 
   async set(key: string, value: any, options?: { ex?: number; EX?: number }): Promise<void> {
-    const client = await this.getClient();
+    let client = await this.getClient();
     const stringValue = typeof value === 'string' ? value : JSON.stringify(value);
     const seconds = options?.ex ?? options?.EX;
-    if (seconds != null) {
-      await client.setEx(key, seconds, stringValue);
-    } else {
-      await client.set(key, stringValue);
-    }
+
+    // 带重试的set操作
+    const executeWithRetry = async (attempt = 1): Promise<void> => {
+      try {
+        if (seconds != null) {
+          await client.setEx(key, seconds, stringValue);
+        } else {
+          await client.set(key, stringValue);
+        }
+      } catch (err) {
+        if (attempt < 3 && err.message?.includes('Connection')) {
+          // 连接错误，尝试重新连接并重试
+          console.warn(`Redis set failed, retrying (${attempt}/3)...`, err.message);
+          client = await this.getClient();
+          return executeWithRetry(attempt + 1);
+        }
+        throw err;
+      }
+    };
+
+    return executeWithRetry();
   }
 
   async get<T = any>(key: string): Promise<T | null> {
-    const client = await this.getClient();
-    const value = await client.get(key);
-    if (!value) return null;
-    try {
-      return JSON.parse(value) as T;
-    } catch {
-      return value as T;
-    }
+    let client = await this.getClient();
+
+    // 带重试的get操作
+    const executeWithRetry = async (attempt = 1): Promise<T | null> => {
+      try {
+        const value = await client.get(key);
+        if (!value) return null;
+        try {
+          return JSON.parse(value) as T;
+        } catch {
+          return value as T;
+        }
+      } catch (err) {
+        if (attempt < 3 && err.message?.includes('Connection')) {
+          // 连接错误，尝试重新连接并重试
+          console.warn(`Redis get failed, retrying (${attempt}/3)...`, err.message);
+          client = await this.getClient();
+          return executeWithRetry(attempt + 1);
+        }
+        throw err;
+      }
+    };
+
+    return executeWithRetry();
   }
 
   async del(key: string): Promise<number> {

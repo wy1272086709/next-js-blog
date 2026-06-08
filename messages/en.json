@@ -118,8 +118,8 @@
     "liked": "Liked",
     "unliked": "Unliked",
     "networkError": "Network error, please try again later",
-    "throttleTitle": "Too frequent",
-    "throttleDescription": "Please wait before liking again"
+    "likedSuccessfully": "Liked successfully",
+    "unlikedSuccessfully": "Unliked successfully"
   },
   "DeletePostButton": {
     "delete": "Delete",

@@ -1,36 +1,10 @@
 import { NextRequest, NextResponse } from "next/server"
-import { createServerClient } from "@supabase/ssr"
-import { cookies } from "next/headers"
-import { getServerMessage } from "@/lib/i18n/server"
+import { createServerClientWithCookies } from "@/lib/supabase/server"
 import { redis } from "@/lib/redis"
 
-async function createSupabaseClient() {
-  const cookieStore = await cookies()
-
-  return createServerClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-    {
-      cookies: {
-        getAll() {
-          return cookieStore.getAll()
-        },
-        setAll(cookiesToSet) {
-          try {
-            cookiesToSet.forEach(({ name, value, options }) =>
-              cookieStore.set(name, value, options)
-            )
-          } catch {
-            // The "setAll" method was called from a Server Component.
-          }
-        },
-      },
-    }
-  )
-}
 
 export async function POST(request: NextRequest, { params }: { params: { id: string } }) {
-  const supabase = await createSupabaseClient()
+  const supabase = await createServerClientWithCookies()
   const postId = (await params).id
 
   // 定义缓存键
@@ -43,7 +17,7 @@ export async function POST(request: NextRequest, { params }: { params: { id: str
     const { data: { user }, error: userError } = await supabase.auth.getUser()
     console.log("当前用户信息:", user, '错误:', userError)
     if (userError || !user || !user.id) {
-      return NextResponse.json({ error: await getServerMessage("api.unauthorized") }, { status: 401 })
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
     }
 
     // 1. 使用Redis缓存获取用户点赞状态
@@ -93,7 +67,7 @@ export async function POST(request: NextRequest, { params }: { params: { id: str
         .eq("user_id", user.id)
 
       if (deleteError) {
-        return NextResponse.json({ error: await getServerMessage("api.unlikeFailed") }, { status: 500 })
+        return NextResponse.json({ error: "Failed to unlike post" }, { status: 500 })
       }
       liked = false
     } else {
@@ -106,7 +80,7 @@ export async function POST(request: NextRequest, { params }: { params: { id: str
         })
 
       if (insertError) {
-        return NextResponse.json({ error: await getServerMessage("api.likeFailed") }, { status: 500 })
+        return NextResponse.json({ error: "Failed to like post" }, { status: 500 })
       }
       liked = true
     }
@@ -158,13 +132,13 @@ export async function POST(request: NextRequest, { params }: { params: { id: str
     })
   } catch (error) {
     console.error("点赞操作错误:", error)
-    return NextResponse.json({ error: await getServerMessage("api.serverError", "Internal server error") }, { status: 500 })
+    return NextResponse.json({ error: "Internal server error" }, { status: 500 })
   }
 }
 
 export async function GET(request: NextRequest, { params }: { params: { id: string } }) {
-  const supabase = await createSupabaseClient()
-  const postId = params.id
+  const supabase = await createServerClientWithCookies()
+  const postId = (await params).id
 
   // 定义缓存键
   const CACHE_KEY = `post:${postId}:likes`
@@ -236,10 +210,10 @@ export async function GET(request: NextRequest, { params }: { params: { id: stri
 
     return NextResponse.json({
       count,
-      hasLiked,
+      liked: hasLiked,
     })
   } catch (error) {
     console.error("获取点赞状态错误:", error)
-    return NextResponse.json({ error: await getServerMessage("api.serverError", "Internal server error") }, { status: 500 })
+    return NextResponse.json({ error: "Internal server error" }, { status: 500 })
   }
 }
