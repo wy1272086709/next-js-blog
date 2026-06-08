@@ -3,6 +3,7 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { useTranslations } from 'next-intl'
 import { toast } from 'sonner'
+import { useRouter } from '@/i18n/navigation'
 import { PostsAPI } from '@/lib/api/posts'
 
 interface PostData {
@@ -17,6 +18,7 @@ interface PostData {
 export function usePostMutation() {
   const t = useTranslations("PostMutation")
   const queryClient = useQueryClient()
+  const router = useRouter()
   const postsAPI = new PostsAPI()
 
   return useMutation({
@@ -40,6 +42,9 @@ export function usePostMutation() {
       toast.success(
         variables.id ? t('postUpdated') : t('postCreated')
       )
+
+      // Navigate to posts dashboard after successful mutation
+      router.push('/dashboard/posts')
     },
     onError: (error) => {
       toast.error(t('saveFailed'))

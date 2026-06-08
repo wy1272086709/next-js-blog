@@ -3,7 +3,7 @@ import type React from "react"
 import { useState } from "react"
 import { createClient } from "@/lib/supabase/client"
 import { useTranslations } from "next-intl"
-import { useRouter, getPathname } from "@/i18n/navigation"
+import { useRouter } from "@/i18n/navigation"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
@@ -154,20 +154,10 @@ export function WritePostForm({
     mutation.mutate(
       post
         ? { ...postData, id: post.id }
-        : postData,
-      {
-        onSuccess: () => {
-          // Navigate after successful mutation
-          const path = getPathname({
-            href: "/dashboard/posts",
-            locale: '',
-          })
-          router.push(path)
-        },
-      }
+        : postData
     )
   }
-
+  
   // Handle loading state from mutation
   if (mutation.isPending) {
     return (
