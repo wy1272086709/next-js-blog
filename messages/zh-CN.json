@@ -192,5 +192,10 @@
     "configError": "AI服务配置错误，请联系管理员",
     "timeout": "请求超时，请稍后重试",
     "generateSummaryFailedRetry": "生成摘要失败，请稍后重试"
+  },
+  "PostMutation": {
+    "postUpdated": "文章已更新",
+    "postCreated": "文章已创建",
+    "saveFailed": "保存失败，请重试"
   }
 }

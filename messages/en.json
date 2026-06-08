@@ -192,5 +192,10 @@
     "configError": "AI service configuration error, please contact administrator",
     "timeout": "Request timeout, please try again later",
     "generateSummaryFailedRetry": "Failed to generate summary, please try again later"
+  },
+  "PostMutation": {
+    "postUpdated": "Post updated",
+    "postCreated": "Post created",
+    "saveFailed": "Save failed, please try again"
   }
 }

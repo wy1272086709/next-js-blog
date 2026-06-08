@@ -1,6 +1,7 @@
 'use client'
 
 import { useMutation, useQueryClient } from '@tanstack/react-query'
+import { useTranslations } from 'next-intl'
 import { toast } from 'sonner'
 import { PostsAPI } from '@/lib/api/posts'
 
@@ -14,6 +15,7 @@ interface PostData {
 }
 
 export function usePostMutation() {
+  const t = useTranslations("PostMutation")
   const queryClient = useQueryClient()
   const postsAPI = new PostsAPI()
 
@@ -32,15 +34,15 @@ export function usePostMutation() {
       // Invalidate posts query to refetch
       queryClient.invalidateQueries({
         queryKey: ['posts', 'user', variables.author_id],
-      })
+      });
 
       // Show success toast
       toast.success(
-        variables.id ? '文章已更新' : '文章已创建'
+        variables.id ? t('postUpdated') : t('postCreated')
       )
     },
     onError: (error) => {
-      toast.error('保存失败，请重试')
+      toast.error(t('saveFailed'))
     },
   })
 }
