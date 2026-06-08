@@ -75,14 +75,6 @@ class RedisClient {
         console.log('Redis Client Disconnected');
         this.isConnected = false;
       });
-
-      this.client.on('reconnecting', () => {
-        console.log('Redis Client Reconnecting...');
-      });
-
-      this.client.on('ready', () => {
-        console.log('Redis Client Ready');
-      });
     }
 
     try {
@@ -117,53 +109,23 @@ class RedisClient {
     const stringValue = typeof value === 'string' ? value : JSON.stringify(value);
     const seconds = options?.ex ?? options?.EX;
 
-    // 带重试的set操作
-    const executeWithRetry = async (attempt = 1): Promise<void> => {
-      try {
-        if (seconds != null) {
-          await client.setEx(key, seconds, stringValue);
-        } else {
-          await client.set(key, stringValue);
-        }
-      } catch (err) {
-        if (attempt < 3 && err.message?.includes('Connection')) {
-          // 连接错误，尝试重新连接并重试
-          console.warn(`Redis set failed, retrying (${attempt}/3)...`, err.message);
-          client = await this.getClient();
-          return executeWithRetry(attempt + 1);
-        }
-        throw err;
-      }
-    };
-
-    return executeWithRetry();
+    if (seconds != null) {
+      await client.setEx(key, seconds, stringValue);
+    } else {
+      await client.set(key, stringValue);
+    }
   }
 
   async get<T = any>(key: string): Promise<T | null> {
     let client = await this.getClient();
 
-    // 带重试的get操作
-    const executeWithRetry = async (attempt = 1): Promise<T | null> => {
-      try {
-        const value = await client.get(key);
-        if (!value) return null;
-        try {
-          return JSON.parse(value) as T;
-        } catch {
-          return value as T;
-        }
-      } catch (err) {
-        if (attempt < 3 && err.message?.includes('Connection')) {
-          // 连接错误，尝试重新连接并重试
-          console.warn(`Redis get failed, retrying (${attempt}/3)...`, err.message);
-          client = await this.getClient();
-          return executeWithRetry(attempt + 1);
-        }
-        throw err;
-      }
-    };
-
-    return executeWithRetry();
+    const value = await client.get(key);
+    if (!value) return null;
+    try {
+      return JSON.parse(value) as T;
+    } catch {
+      return value as T;
+    }
   }
 
   async del(key: string): Promise<number> {
