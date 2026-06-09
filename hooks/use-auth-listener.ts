@@ -34,14 +34,12 @@ export function useAuthListener() {
     window.fetch = async (...args) => {
       try {
         const response = await originalFetch(...args)
-
         // 检查响应是否是 401 且是认证相关 API
-        if (response.status === 401 && args[0]?.includes('/api/')) {
+        if (response.status === 401 && String(args?.[0])?.includes('/api/')) {
           const error = new Error("Unauthorized")
           Object.assign(error, { status: 401 })
           handleAuthError(error)
         }
-
         return response
       } catch (error) {
         handleAuthError(error)
