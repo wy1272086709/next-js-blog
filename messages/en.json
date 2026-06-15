@@ -1,27 +1,31 @@
 {
   "metadata": {
-    "title": "Tech Blog - Explore the Possibilities of Technology",
-    "description": "A tech blog focused on frontend, backend and AI"
+    "title": "Technical Creation & Communication Platform",
+    "description": "Write tech articles • Real-time desktop chat"
   },
   "Header": {
-    "siteName": "Tech Blog",
+    "siteName": "Technical Creation & Communication Platform",
     "posts": "Posts",
     "dashboard": "Dashboard",
     "login": "Login",
     "signUp": "Sign Up"
   },
   "HomePage": {
-    "title": "Explore the Possibilities of Technology",
-    "subtitle": "A tech blog focused on frontend, backend and AI. Share knowledge, grow together with developers.",
+    "title": "Technical Creation & Communication Platform",
+    "subtitle": "Write tech articles • Real-time desktop chat",
     "browsePosts": "Browse Posts",
     "startWriting": "Start Writing",
-    "categoriesTitle": "Categories",
+    "categoriesTitle": "Technical Writing",
     "frontend": "Frontend",
     "frontendDesc": "React, Vue, Next.js, CSS, TypeScript and more",
     "backend": "Backend",
     "backendDesc": "Node.js, Python, Go, databases, microservices and more",
     "ai": "AI",
-    "aiDesc": "ML, deep learning, LLM, AI applications and more"
+    "aiDesc": "ML, deep learning, LLM, AI applications and more",
+    "chatTitle": "Technical Communication",
+    "chat": "Desktop Chat",
+    "chatDesc": "Download desktop client for real-time chat experience",
+    "downloadNow": "Download Now"
   },
   "PostsPage": {
     "allPosts": "All Posts",

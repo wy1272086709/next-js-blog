@@ -2,7 +2,7 @@ import { setRequestLocale } from "next-intl/server"
 import { getTranslations } from "next-intl/server"
 import { Link } from "@/i18n/navigation"
 import { Button } from "@/components/ui/button"
-import { ArrowRight, Code2, Server, Bot } from "lucide-react"
+import { ArrowRight, Code2, Server, Bot, Download } from "lucide-react"
 import { routing } from "@/i18n/routing"
 
 type Props = { params: Promise<{ locale: string }> }
@@ -74,6 +74,35 @@ export default async function HomePage({ params }: Props) {
           </Link>
         </div>
       </section>
+
+      <section className="py-16 border-t">
+          <div className="container mx-auto px-4">
+            <div className="flex flex-col items-center text-center">
+              <h2 className="text-2xl font-bold mb-8">{t("chatTitle")}</h2>
+              <div className="w-full max-w-4xl mx-auto">
+                <Link
+                  href="/chat/download"
+                  className="group block p-8 md:p-12 rounded-xl bg-gradient-to-r from-primary/5 to-primary/10 hover:from-primary/10 hover:to-primary/20 transition-all duration-300"
+                >
+                  <div className="flex flex-col items-center gap-6">
+                    <div className="p-4 rounded-full bg-primary/10 group-hover:bg-primary/20 transition-colors">
+                      <Download className="h-12 w-12 text-primary" />
+                    </div>
+                    <div>
+                      <h3 className="text-2xl md:text-3xl font-bold mb-3 group-hover:text-primary transition-colors">
+                        {t("chat")}
+                      </h3>
+                      <p className="text-lg text-muted-foreground mb-6">{t("chatDesc")}</p>
+                      <Button variant="default" size="lg" className="group-hover:scale-105 transition-transform">
+                        {t("downloadNow")} <ArrowRight className="ml-2 h-5 w-5" />
+                      </Button>
+                    </div>
+                  </div>
+                </Link>
+              </div>
+            </div>
+          </div>
+        </section>
     </div>
   )
 }

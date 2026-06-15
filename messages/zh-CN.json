@@ -1,27 +1,31 @@
 {
   "metadata": {
-    "title": "技术博客 - 探索技术的无限可能",
-    "description": "一个专注于前端、后端和人工智能的技术博客平台"
+    "title": "技术创作与交流平台",
+    "description": "撰写技术文章・桌面端实时聊天"
   },
   "Header": {
-    "siteName": "技术博客",
+    "siteName": "技术创作与交流平台",
     "posts": "文章",
     "dashboard": "个人中心",
     "login": "登录",
     "signUp": "注册"
   },
   "HomePage": {
-    "title": "探索技术的无限可能",
-    "subtitle": "一个专注于前端、后端和人工智能的技术博客平台。 分享知识，记录成长，与志同道合的开发者一起进步。",
+    "title": "技术创作与交流平台",
+    "subtitle": "撰写技术文章・桌面端实时聊天",
     "browsePosts": "浏览文章",
     "startWriting": "开始写作",
-    "categoriesTitle": "技术板块",
+    "categoriesTitle": "技术写作",
     "frontend": "前端开发",
     "frontendDesc": "React、Vue、Next.js、CSS、TypeScript 等前端技术文章",
     "backend": "后端开发",
     "backendDesc": "Node.js、Python、Go、数据库、微服务等后端技术文章",
     "ai": "人工智能",
-    "aiDesc": "机器学习、深度学习、LLM、AI 应用开发等前沿技术"
+    "aiDesc": "机器学习、深度学习、LLM、AI 应用开发等前沿技术",
+    "chatTitle": "技术交流",
+    "chat": "桌面端实时聊天",
+    "chatDesc": "下载桌面客户端，体验实时聊天功能",
+    "downloadNow": "立即下载"
   },
   "PostsPage": {
     "allPosts": "全部文章",
