@@ -84,7 +84,6 @@ export default async function HomePage({ params }: Props) {
           windowsLabel={t("windows")}
           macosLabel={t("macos")}
           downloadLabel={t("download")}
-          unavailableLabel={t("unavailable")}
           recommendedLabel={t("recommended")}
           windowsUrl={process.env.NEXT_PUBLIC_CHAT_WINDOWS_DOWNLOAD_URL}
           macosUrl={process.env.NEXT_PUBLIC_CHAT_MACOS_DOWNLOAD_URL}

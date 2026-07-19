@@ -29,7 +29,6 @@
     "windows": "Windows",
     "macos": "macOS",
     "download": "Download for",
-    "unavailable": "not available yet",
     "recommended": "Recommended"
   },
   "DownloadPage": {
@@ -38,7 +37,6 @@
     "windows": "Windows",
     "macos": "macOS",
     "download": "Download for",
-    "unavailable": "not available yet",
     "recommended": "Recommended"
   },
   "PostsPage": {

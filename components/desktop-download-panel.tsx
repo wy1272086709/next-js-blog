@@ -12,7 +12,6 @@ interface DesktopDownloadPanelProps {
   windowsLabel: string
   macosLabel: string
   downloadLabel: string
-  unavailableLabel: string
   recommendedLabel: string
   windowsUrl?: string
   macosUrl?: string
@@ -25,7 +24,6 @@ export function DesktopDownloadPanel({
   windowsLabel,
   macosLabel,
   downloadLabel,
-  unavailableLabel,
   recommendedLabel,
   windowsUrl,
   macosUrl,
@@ -48,8 +46,18 @@ export function DesktopDownloadPanel({
   }, [])
 
   const options = [
-    { id: 'windows' as const, label: windowsLabel, url: windowsUrl, icon: Monitor },
-    { id: 'macos' as const, label: macosLabel, url: macosUrl, icon: Apple },
+    {
+      id: 'windows' as const,
+      label: windowsLabel,
+      url: windowsUrl || '/downloads/chat-client-windows.exe',
+      icon: Monitor,
+    },
+    {
+      id: 'macos' as const,
+      label: macosLabel,
+      url: macosUrl || '/downloads/chat-client-macos.dmg',
+      icon: Apple,
+    },
   ]
   const selected = options.find(option => option.id === platform) ?? options[0]
 
@@ -96,24 +104,14 @@ export function DesktopDownloadPanel({
         })}
       </div>
 
-      {selected.url ? (
-        <a
-          href={selected.url}
-          className="inline-flex h-12 min-w-56 items-center justify-center gap-2 rounded-md bg-foreground px-6 text-sm font-medium text-background transition-colors hover:bg-foreground/85 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
-        >
-          <Download className="size-4" aria-hidden="true" />
-          {downloadLabel} {selected.label}
-        </a>
-      ) : (
-        <button
-          type="button"
-          disabled
-          className="inline-flex h-12 min-w-56 items-center justify-center gap-2 rounded-md bg-muted px-6 text-sm font-medium text-muted-foreground"
-        >
-          <Download className="size-4" aria-hidden="true" />
-          {selected.label} {unavailableLabel}
-        </button>
-      )}
+      <a
+        href={selected.url}
+        download
+        className="inline-flex h-12 min-w-56 items-center justify-center gap-2 rounded-md bg-foreground px-6 text-sm font-medium text-background shadow-sm transition-all hover:-translate-y-0.5 hover:bg-foreground/85 hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 active:translate-y-0"
+      >
+        <Download className="size-4" aria-hidden="true" />
+        {downloadLabel} {selected.label}
+      </a>
     </div>
   )
 }

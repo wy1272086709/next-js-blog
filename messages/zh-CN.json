@@ -28,8 +28,7 @@
     "downloadNow": "立即下载",
     "windows": "Windows",
     "macos": "macOS",
-    "download": "下载",
-    "unavailable": "暂未提供",
+    "download": "立即下载",
     "recommended": "推荐"
   },
   "DownloadPage": {
@@ -37,8 +36,7 @@
     "description": "支持 Windows 和 macOS，选择你的系统下载安装包",
     "windows": "Windows",
     "macos": "macOS",
-    "download": "下载",
-    "unavailable": "暂未提供",
+    "download": "立即下载",
     "recommended": "推荐"
   },
   "PostsPage": {
