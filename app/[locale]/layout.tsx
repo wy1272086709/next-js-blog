@@ -24,22 +24,6 @@ export default async function LocaleLayout({ children, params }: Props) {
 
   const messages = await getMessages()
 
-  // Initialize CSRF token on the server
-  try {
-    const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000'
-    const response = await fetch(`${baseUrl}/api/csrf`, {
-      method: 'GET',
-      credentials: 'include'
-    })
-
-    if (response.ok) {
-      const { token } = await response.json()
-      // The cookie is already set by the API route
-    }
-  } catch (error) {
-    console.error('Failed to initialize CSRF token:', error)
-  }
-
   return (
     <NextIntlClientProvider messages={messages}>
       <main className="min-h-[calc(100svh-3.5rem)]">

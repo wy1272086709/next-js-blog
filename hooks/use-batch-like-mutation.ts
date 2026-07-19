@@ -4,6 +4,7 @@ import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { toast } from 'sonner'
 import { useRouter, getPathname } from '@/i18n/navigation'
 import { useCallback, useRef } from 'react'
+import { getClientCSRFToken } from '@/lib/csrf/client'
 
 interface BatchLikeAction {
   postId: string
@@ -49,14 +50,20 @@ export function useBatchLikeMutation() {
             liked,
           })
 
-          return { postId, previousData }
+          return { postId, previousData, count: Math.max(0, newCount) }
         })
       )
 
       // 执行批量API调用
+      const csrfToken = await getClientCSRFToken()
       const promises = actions.map(action =>
         fetch(`/api/posts/${action.postId}/like`, {
           method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'X-CSRF-Token': csrfToken,
+          },
+          body: JSON.stringify({ liked: action.liked }),
         })
       )
 
@@ -66,6 +73,7 @@ export function useBatchLikeMutation() {
       // 处理结果
       const results = responses.map((response, index) => {
         const action = actions[index]
+        const optimisticResult = optimisticResults[index]
 
         if (response.status === 'fulfilled') {
           // 成功，更新为服务器数据
@@ -77,16 +85,16 @@ export function useBatchLikeMutation() {
             postId: action.postId,
             success: true,
             data: {
-              count: optimisticResults[index].status === 'fulfilled'
-                ? optimisticResults[index].value.count
+              count: optimisticResult.status === 'fulfilled'
+                ? optimisticResult.value.count
                 : 0,
               liked: action.liked,
             },
           }
         } else {
           // 失败，回滚
-          const rollback = optimisticResults[index].status === 'fulfilled'
-            ? optimisticResults[index].value
+          const rollback = optimisticResult.status === 'fulfilled'
+            ? optimisticResult.value
             : null
 
           if (rollback?.previousData) {

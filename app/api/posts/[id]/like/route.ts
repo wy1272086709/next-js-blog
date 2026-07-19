@@ -1,219 +1,109 @@
-import { NextRequest, NextResponse } from "next/server"
+import { NextResponse } from "next/server"
 import { createServerClientWithCookies } from "@/lib/supabase/server"
-import { redis } from "@/lib/redis"
 
+type RouteContext = { params: Promise<{ id: string }> }
 
-export async function POST(request: NextRequest, { params }: { params: { id: string } }) {
+export async function POST(request: Request, { params }: RouteContext) {
   const supabase = await createServerClientWithCookies()
   const postId = (await params).id
 
-  // 定义缓存键
-  const CACHE_KEY = `post:${postId}:likes`
-  const CACHE_USER_KEY = `post:${postId}:user:${(await supabase.auth.getUser()).data.user?.id}:liked`
-  const CACHE_TTL = 300 // 5分钟
-
   try {
-    // 获取当前用户
-    const { data: { user }, error: userError } = await supabase.auth.getUser()
-    console.log("当前用户信息:", user, '错误:', userError)
-    if (userError || !user || !user.id) {
+    const [authResult, countResult] = await Promise.all([
+      supabase.auth.getUser(),
+      supabase
+        .from("post_likes")
+        .select("*", { count: "exact", head: true })
+        .eq("post_id", postId),
+    ])
+    const { user } = authResult.data
+    const userError = authResult.error
+
+    if (userError || !user) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
     }
 
-    // 1. 使用Redis缓存获取用户点赞状态
-    let hasLiked = false
-    try {
-      const cachedLiked = await redis.get(CACHE_USER_KEY)
-      if (cachedLiked !== null) {
-        hasLiked = JSON.parse(cachedLiked)
-      } else {
-        // 从数据库查询用户点赞状态
-        const result = await supabase
-          .from("post_likes")
-          .select("id")
-          .eq("post_id", postId)
-          .eq("user_id", user.id)
-          .single()
-
-        if (!result.error && result.data) {
-          hasLiked = true
-        }
-        // 缓存用户点赞状态
-        await redis.set(CACHE_USER_KEY, String(hasLiked), { ex: CACHE_TTL })
-      }
-    } catch (err) {
-      console.error("查询点赞状态错误:", err)
-      // 缓存查询失败，直接查询数据库
-      const result = await supabase
-        .from("post_likes")
-        .select("id")
-        .eq("post_id", postId)
-        .eq("user_id", user.id)
-        .single()
-
-      hasLiked = !result.error && !!result.data
+    if (countResult.error) {
+      console.error("Failed to count post likes:", countResult.error)
+      return NextResponse.json({ error: "Failed to get like count" }, { status: 500 })
     }
 
-    // 2. 执行点赞/取消点赞操作
-    let liked: boolean = hasLiked
-    let count: number
+    const { liked } = (await request.json()) as { liked?: boolean }
+    if (typeof liked !== "boolean") {
+      return NextResponse.json({ error: "Invalid like state" }, { status: 400 })
+    }
 
-    if (hasLiked) {
-      // 取消点赞
-      const { error: deleteError } = await supabase
+    if (!liked) {
+      const { error } = await supabase
         .from("post_likes")
         .delete()
         .eq("post_id", postId)
         .eq("user_id", user.id)
 
-      if (deleteError) {
+      if (error) {
+        console.error("Failed to unlike post:", error)
         return NextResponse.json({ error: "Failed to unlike post" }, { status: 500 })
       }
-      liked = false
     } else {
-      // 添加点赞
-      const { error: insertError } = await supabase
+      const { error } = await supabase
         .from("post_likes")
-        .insert({
-          post_id: postId,
-          user_id: user.id,
-        })
+        .upsert(
+          { post_id: postId, user_id: user.id },
+          { onConflict: "post_id,user_id", ignoreDuplicates: true }
+        )
 
-      if (insertError) {
+      if (error) {
+        console.error("Failed to like post:", error)
         return NextResponse.json({ error: "Failed to like post" }, { status: 500 })
       }
-      liked = true
     }
 
-    // 3. 获取最新点赞数（使用Redis缓存优化）
-    let finalCount: number
-    try {
-      const cachedCount = await redis.get(CACHE_KEY)
-      if (cachedCount !== null) {
-        finalCount = JSON.parse(cachedCount)
-        // 如果有实际点赞操作，更新计数
-        if (liked) {
-          finalCount += 1
-        } else {
-          finalCount = Math.max(0, finalCount - 1)
-        }
-      } else {
-        // 从数据库获取最新计数
-        const { count: dbCount } = await supabase
-          .from("post_likes")
-          .select("*", { count: "exact", head: true })
-          .eq("post_id", postId)
-        finalCount = dbCount || 0
-      }
-    } catch (err) {
-      console.error("获取计数错误:", err)
-      // 缓存失败，直接查询数据库
-      const { count: dbCount } = await supabase
-        .from("post_likes")
-        .select("*", { count: "exact", head: true })
-        .eq("post_id", postId)
-      finalCount = dbCount || 0
-    }
-
-    // 4. 更新缓存
-    try {
-      await redis.set(CACHE_KEY, String(finalCount), { ex: CACHE_TTL })
-      // 更新用户缓存
-      await redis.set(CACHE_USER_KEY, String(liked), { ex: CACHE_TTL })
-    } catch (err) {
-      console.error("更新缓存失败:", err)
-      // 缓存失败不影响主要功能
-    }
-
-    return NextResponse.json({
-      success: true,
-      liked,
-      count: finalCount,
-    })
+    const previousCount = countResult.count ?? 0
+    const count = liked ? previousCount + 1 : Math.max(0, previousCount - 1)
+    return NextResponse.json({ liked, count })
   } catch (error) {
-    console.error("点赞操作错误:", error)
+    console.error("Failed to update post like:", error)
     return NextResponse.json({ error: "Internal server error" }, { status: 500 })
   }
 }
 
-export async function GET(request: NextRequest, { params }: { params: { id: string } }) {
+export async function GET(_request: Request, { params }: RouteContext) {
   const supabase = await createServerClientWithCookies()
   const postId = (await params).id
 
-  // 定义缓存键
-  const CACHE_KEY = `post:${postId}:likes`
-  const CACHE_TTL = 300 // 5分钟
-
   try {
-    // 1. 优先从Redis缓存获取点赞总数
-    let count: number
-    try {
-      const cachedCount = await redis.get(CACHE_KEY)
-      if (cachedCount !== null) {
-        count = JSON.parse(cachedCount)
-      } else {
-        // 从数据库获取最新计数
-        const { count: dbCount } = await supabase
-          .from("post_likes")
-          .select("*", { count: "exact", head: true })
-          .eq("post_id", postId)
-        count = dbCount || 0
+    const {
+      data: { session },
+    } = await supabase.auth.getSession()
+    const user = session?.user
 
-        // 缓存到Redis
-        await redis.set(CACHE_KEY, String(count), { ex: CACHE_TTL })
-      }
-    } catch (err) {
-      console.error("获取计数错误:", err)
-      // 缓存失败，直接查询数据库
-      const { count: dbCount } = await supabase
-        .from("post_likes")
-        .select("*", { count: "exact", head: true })
-        .eq("post_id", postId)
-      count = dbCount || 0
-    }
+    const countQuery = supabase
+      .from("post_likes")
+      .select("*", { count: "exact", head: true })
+      .eq("post_id", postId)
 
-    // 2. 检查当前用户是否点赞了该文章
-    let hasLiked = false
-    const { data: { user } } = await supabase.auth.getUser()
-
-    if (user && user.id) {
-      const CACHE_USER_KEY = `post:${postId}:user:${user.id}:liked`
-      try {
-        const cachedLiked = await redis.get(CACHE_USER_KEY)
-        if (cachedLiked !== null) {
-          hasLiked = JSON.parse(cachedLiked)
-        } else {
-          // 从数据库查询用户点赞状态
-          const { data: userLike, error: likeError } = await supabase
-            .from("post_likes")
-            .select("id")
-            .eq("post_id", postId)
-            .eq("user_id", user.id)
-            .single()
-
-          hasLiked = !likeError && !!userLike
-          // 缓存用户点赞状态
-          await redis.set(CACHE_USER_KEY, String(hasLiked), { ex: CACHE_TTL })
-        }
-      } catch (err) {
-        console.error("查询用户点赞状态错误:", err)
-        // 直接查询数据库
-        const { data: userLike, error: likeError } = await supabase
+    const likeQuery = user
+      ? supabase
           .from("post_likes")
           .select("id")
           .eq("post_id", postId)
           .eq("user_id", user.id)
-          .single()
-        hasLiked = !likeError && !!userLike
-      }
+          .maybeSingle()
+      : Promise.resolve({ data: null, error: null })
+
+    const [{ count, error: countError }, { data: userLike, error: likeError }] =
+      await Promise.all([countQuery, likeQuery])
+
+    if (countError || likeError) {
+      console.error("Failed to get post likes:", countError || likeError)
+      return NextResponse.json({ error: "Failed to get likes" }, { status: 500 })
     }
 
     return NextResponse.json({
-      count,
-      liked: hasLiked,
+      count: count ?? 0,
+      liked: Boolean(userLike),
     })
   } catch (error) {
-    console.error("获取点赞状态错误:", error)
+    console.error("Failed to get post likes:", error)
     return NextResponse.json({ error: "Internal server error" }, { status: 500 })
   }
 }

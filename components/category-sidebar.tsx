@@ -21,9 +21,11 @@ const categoryIcons: Record<string, React.ReactNode> = {
 export function CategorySidebar({
   categories,
   activeCategory,
+  onCategoryChange,
 }: {
   categories: Category[]
   activeCategory?: string
+  onCategoryChange?: (category?: string) => void
 }) {
   const t = useTranslations("CategorySidebar")
 
@@ -32,6 +34,7 @@ export function CategorySidebar({
       <nav className="sticky top-20 space-y-1">
         <Link
           href="/posts"
+          onClick={() => onCategoryChange?.()}
           className={cn(
             "flex items-center gap-3 px-3 py-2 rounded-lg text-sm transition-colors",
             !activeCategory
@@ -46,6 +49,7 @@ export function CategorySidebar({
           <Link
             key={category.id}
             href={`/posts?category=${category.slug}`}
+            onClick={() => onCategoryChange?.(category.slug)}
             className={cn(
               "flex items-center gap-3 px-3 py-2 rounded-lg text-sm transition-colors",
               activeCategory === category.slug

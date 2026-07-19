@@ -1,4 +1,5 @@
 import { useState, useCallback, useRef, useEffect } from 'react';
+import { getClientCSRFToken } from '@/lib/csrf/client';
 
 export function useMarkdownStream() {
   const [raw, setRaw] = useState('');
@@ -52,9 +53,13 @@ export function useMarkdownStream() {
     abortController.current = new AbortController();
 
     try {
+      const csrfToken = await getClientCSRFToken();
       const res = await fetch('/api/dashboard/polish', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          'Content-Type': 'application/json',
+          'X-CSRF-Token': csrfToken,
+        },
         body: JSON.stringify({
           content: prompt,
           resumeFrom: resumeFrom // 发送恢复标记

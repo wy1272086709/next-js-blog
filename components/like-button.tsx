@@ -8,8 +8,8 @@ import { useEffect } from "react"
 
 interface LikeButtonProps {
   postId: string
-  initialLikeCount: number
-  initialHasLiked: boolean
+  initialLikeCount?: number
+  initialHasLiked?: boolean
   className?: string
   size?: "sm" | "default" | "lg"
   onLikeChange?: (liked: boolean, count: number) => void
@@ -32,10 +32,9 @@ export function LikeButton({
     handleLike,
   } = useLikeMutation({
     postId,
-    initialData: {
-      count: initialLikeCount,
-      liked: initialHasLiked,
-    },
+    initialData: initialLikeCount === undefined
+      ? undefined
+      : { count: initialLikeCount, liked: initialHasLiked ?? false },
   })
 
   // 监听点赞变化

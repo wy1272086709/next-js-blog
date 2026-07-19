@@ -7,6 +7,7 @@ import { useTranslations } from 'next-intl'
 import { useRouter, getPathname } from '@/i18n/navigation'
 import type { User } from '@supabase/supabase-js'
 import { useState, useEffect, useCallback } from 'react'
+import { getClientCSRFToken } from '@/lib/csrf/client'
 
 export interface LikeData {
   count: number
@@ -41,18 +42,25 @@ export function useLikeMutation({ postId, initialData, enabled = true }: UseLike
     },
     initialData,
     staleTime: 1000 * 60 * 5, // 5分钟内不重新请求
-    enabled: enabled && !!user,
+    enabled,
   });
 
   // 乐观更新 mutation
   const mutation = useMutation({
-    mutationFn: async () => {
+    mutationFn: async (liked: boolean) => {
       if (!user) {
         throw new Error('请先登录')
       }
 
+      const csrfToken = await getClientCSRFToken()
+
       const response = await fetch(`/api/posts/${postId}/like`, {
         method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-CSRF-Token': csrfToken,
+        },
+        body: JSON.stringify({ liked }),
       })
 
       if (!response.ok) {
@@ -131,18 +139,13 @@ export function useLikeMutation({ postId, initialData, enabled = true }: UseLike
       }
     },
 
-    // 4. 无论成功失败都触发查询失效
-    onSettled: () => {
-      queryClient.invalidateQueries({
-        queryKey: ['post', postId, 'likes'],
-      })
-    },
   })
   // 手动触发点赞的方法（用于防抖）
   const handleLike = useCallback(() => {
     if (mutation.isPending) return // 防止重复点击
-    mutation.mutate()
-  }, [mutation])
+    const currentData = queryClient.getQueryData(['post', postId, 'likes']) as LikeData
+    mutation.mutate(!currentData?.liked)
+  }, [mutation, postId, queryClient])
 
   return {
     likeData,

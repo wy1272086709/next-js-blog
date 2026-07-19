@@ -7,6 +7,7 @@ import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { getClientCSRFToken } from '@/lib/csrf/client'
 
 interface CreatePostFormProps {
   onSuccess?: () => void
@@ -32,11 +33,13 @@ export function CreatePostForm({ onSuccess, onError }: CreatePostFormProps) {
     setError('')
 
     try {
+      const csrfToken = await getClientCSRFToken()
       // 使用 CSRF Form 组件自动处理 CSRF token
       const response = await fetch('/api/posts', {
         method: 'POST',
         headers: {
-          'Content-Type': 'application/json'
+          'Content-Type': 'application/json',
+          'X-CSRF-Token': csrfToken,
         },
         body: JSON.stringify({
           title,

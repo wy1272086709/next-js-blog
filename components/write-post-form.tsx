@@ -17,6 +17,7 @@ import { CollapsibleMarkdown } from "@/components/collapsible-markdown"
 import { useMarkdownStream } from '@/hooks/use-markdown-preview'
 import { usePostMutation } from '@/hooks/use-post-mutation'
 import { SuccessToast } from "./ui/success-toast"
+import { getClientCSRFToken } from "@/lib/csrf/client"
 
 interface Category {
   id: string
@@ -79,10 +80,12 @@ export function WritePostForm({
         ? '/api/zh-CN/dashboard'
         : '/api/en/dashboard';
 
+      const csrfToken = await getClientCSRFToken()
       const response = await fetch('/api/dashboard', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
+          'X-CSRF-Token': csrfToken,
         },
         body: JSON.stringify({
           content: content.trim()

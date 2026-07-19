@@ -1,11 +1,8 @@
-import { NextResponse } from 'next/server'
-import { generateCSRFToken, setCSRFToken } from '@/lib/csrf/utils'
+import { type NextRequest, NextResponse } from 'next/server'
+import { generateCSRFToken } from '@/lib/csrf/utils'
 
-export async function GET() {
-  const token = generateCSRFToken()
-
-  // 设置 session 中的 CSRF token
-  await setCSRFToken(token)
+export async function GET(request: NextRequest) {
+  const token = request.cookies.get('csrf_token')?.value ?? generateCSRFToken()
 
   const response = NextResponse.json({ token })
 
@@ -14,7 +11,7 @@ export async function GET() {
     httpOnly: false,
     secure: process.env.NODE_ENV === 'production',
     sameSite: 'lax' as const,
-    maxAge: 300, // 5分钟过期
+    maxAge: 60 * 60, // 1 hour
     path: '/'
   })
 

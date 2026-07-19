@@ -1,7 +1,5 @@
 import { setRequestLocale } from "next-intl/server"
 import { getTranslations } from "next-intl/server"
-import { createClient } from "@/lib/supabase/server"
-import { redis } from "@/lib/redis"
 import { notFound } from "next/navigation"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Badge } from "@/components/ui/badge"
@@ -13,30 +11,15 @@ import ReactMarkdown from "react-markdown"
 import remarkGfm from "remark-gfm"
 import rehypeHighlight from "rehype-highlight"
 import { CommentSection } from "@/components/comment-section"
+import { getPublicPost } from "@/lib/data/public-posts"
 
-import { routing } from "@/i18n/routing"
-
-const REDIS_TIMEOUT_MS = 3000
-// 强制动态渲染
-export const dynamic = 'force-dynamic'
-
-async function withRedisTimeout<T>(fn: () => Promise<T>): Promise<T | null> {
-  try {
-    return await Promise.race([
-      fn(),
-      new Promise<null>((_, reject) =>
-        setTimeout(() => reject(new Error("Redis timeout")), REDIS_TIMEOUT_MS)
-      ),
-    ])
-  } catch {
-    return null
-  }
-}
+export const revalidate = 300
+export const dynamicParams = true
 
 type Props = { params: Promise<{ locale: string; id: string }> }
 
 export function generateStaticParams() {
-  return routing.locales.map((locale) => ({ locale }))
+  return []
 }
 
 export default async function PostPage({ params }: Props) {
@@ -46,67 +29,8 @@ export default async function PostPage({ params }: Props) {
   const dateFormatT = await getTranslations("dateFormat")
   const dateLocale = locale === "zh-CN" ? zhCN : enUS
   const dateFormat = dateFormatT("yearMonthDay")
-  // 使用了依赖动态 API（如 cookies）的 Supabase 服务端客户端
-  // bug修复
-  const supabase = await createClient()
-  const likeKey = `post:${id}:likes`
-  const [postResult, cachedCount, authResult] = await Promise.all([
-    supabase
-      .from("posts")
-      .select(
-        `
-      *,
-      profiles:author_id(username, avatar_url),
-      categories:category_id(name, slug)
-    `
-      )
-      .eq("id", id)
-      .single(),
-    withRedisTimeout(() => redis.get(likeKey)),
-    supabase.auth.getUser(),
-  ])
-
-  const { data: post } = postResult
+  const post = await getPublicPost(id)
   if (!post) notFound()
-
-  const { data: { user } } = authResult
-
-  let likeCount: number
-  if (cachedCount !== null && cachedCount !== undefined) {
-    likeCount = typeof cachedCount === "string" ? parseInt(cachedCount, 10) : Number(cachedCount)
-  } else {
-    const { count } = await supabase
-      .from("post_likes")
-      .select("*", { count: "exact", head: true })
-      .eq("post_id", id)
-    likeCount = count ?? 0
-    withRedisTimeout(() => redis.set(likeKey, String(likeCount), { ex: 86400 })).catch(() => {})
-  }
-
-  let hasLiked = false
-  const userLikeKey = user ? `post:${id}:user:${user.id}:liked` : null
-
-  const [cachedLikeStatus, _view] = await Promise.all([
-    userLikeKey ? withRedisTimeout(() => redis.get(userLikeKey)) : Promise.resolve(null),
-    supabase.from("posts").update({ view_count: (post.view_count || 0) + 1 }).eq("id", id),
-  ])
-
-  if (user && userLikeKey) {
-    if (cachedLikeStatus === "1") {
-      hasLiked = true
-    } else {
-      const { data: like } = await supabase
-        .from("post_likes")
-        .select("id")
-        .eq("post_id", id)
-        .eq("user_id", user.id)
-        .single()
-      hasLiked = !!like
-      if (hasLiked) {
-        withRedisTimeout(() => redis.set(userLikeKey, "1", { ex: 86400 * 30 })).catch(() => {})
-      }
-    }
-  }
 
   // 评论总数将在客户端计算，以避免额外的API调用
   const author = post.profiles as { username: string; avatar_url: string } | null
@@ -142,17 +66,14 @@ export default async function PostPage({ params }: Props) {
             </span>
           </div>
         </div>
-        <LikeButton postId={id} initialLikeCount={likeCount || 0} initialHasLiked={hasLiked} />
+        <LikeButton postId={id} />
       </div>
       <div className="markdown-body prose prose-neutral dark:prose-invert max-w-none">
         <ReactMarkdown remarkPlugins={[remarkGfm]} rehypePlugins={[rehypeHighlight]}>
           {post.content || ""}
         </ReactMarkdown>
       </div>
-      <CommentSection
-        postId={id}
-        initialUser={user}
-      />
+      <CommentSection postId={id} />
     </article>
   )
 }

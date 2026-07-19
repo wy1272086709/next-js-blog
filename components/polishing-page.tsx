@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Wand2, Loader2 } from 'lucide-react';
 import { useTranslations } from 'next-intl';
+import { getClientCSRFToken } from '@/lib/csrf/client';
 
 export function PolishingPage() {
   const t = useTranslations();
@@ -24,10 +25,12 @@ export function PolishingPage() {
     fullContentRef.current = '';
 
     try {
+      const csrfToken = await getClientCSRFToken();
       const response = await fetch('/api/dashboard/polish', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
+          'X-CSRF-Token': csrfToken,
         },
         body: JSON.stringify({ content }),
       });
