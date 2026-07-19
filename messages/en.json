@@ -24,8 +24,22 @@
     "aiDesc": "ML, deep learning, LLM, AI applications and more",
     "chatTitle": "Technical Communication",
     "chat": "Desktop Chat",
-    "chatDesc": "Download desktop client for real-time chat experience",
-    "downloadNow": "Download Now"
+    "chatDesc": "Choose your platform and download the desktop client",
+    "downloadNow": "Download Now",
+    "windows": "Windows",
+    "macos": "macOS",
+    "download": "Download for",
+    "unavailable": "not available yet",
+    "recommended": "Recommended"
+  },
+  "DownloadPage": {
+    "title": "Download Desktop Chat",
+    "description": "Available for Windows and macOS. Choose your platform to get the installer.",
+    "windows": "Windows",
+    "macos": "macOS",
+    "download": "Download for",
+    "unavailable": "not available yet",
+    "recommended": "Recommended"
   },
   "PostsPage": {
     "allPosts": "All Posts",

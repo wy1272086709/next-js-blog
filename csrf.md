@@ -1,6 +1,145 @@
 # 双 CSRF 防护机制实现详解
 
-## 📋 概述
+> 文档状态：本文最初记录的是 `Supabase Session metadata + Cookie + request body` 方案。该方案已经停止使用。当前实现为“双重提交 Cookie（Cookie + X-CSRF-Token Header）”。后半部分保留为历史设计记录，不代表当前代码。
+
+## 当前实现（2026-07 更新）
+
+### 1. 方案概述
+
+当前方案只生成一个随机 CSRF token，但通过两个不同的请求位置提交：
+
+1. 浏览器自动携带 `csrf_token` Cookie；
+2. 前端 JavaScript 主动把相同值写入 `X-CSRF-Token` Header；
+3. `proxy.ts` 对两个值进行本地比较。
+
+这通常称为 Double Submit Cookie。这里的“双 Token”是同一个随机值的两份提交副本，并不是两个独立生成、分别存储的秘密 Token。
+
+```text
+GET /api/csrf
+  -> 生成或复用 csrf_token
+  -> Set-Cookie: csrf_token=<token>
+  -> { token: <token> }
+
+POST /api/...
+  -> Cookie: csrf_token=<token>             浏览器自动发送
+  -> X-CSRF-Token: <token>                  前端主动设置
+  -> proxy.ts 比较两者，一致后放行
+```
+
+### 2. Token 生成与客户端复用
+
+`app/api/csrf/route.ts` 优先复用现有 Cookie。Cookie 不存在时，使用 `crypto.randomUUID()` 生成新值：
+
+```typescript
+export async function GET(request: NextRequest) {
+  const token = request.cookies.get('csrf_token')?.value ?? generateCSRFToken()
+  const response = NextResponse.json({ token })
+
+  response.cookies.set('csrf_token', token, {
+    httpOnly: false,
+    secure: process.env.NODE_ENV === 'production',
+    sameSite: 'lax',
+    maxAge: 60 * 60,
+    path: '/',
+  })
+
+  return response
+}
+```
+
+`lib/csrf/client.ts` 负责客户端复用：
+
+- Cookie 已存在时直接使用，不额外请求接口；
+- 页面首次初始化时共享同一个 Promise，避免 React Strict Mode 或多个组件产生重复请求；
+- Cookie 过期或不存在时，重新调用 `/api/csrf`。
+
+### 3. 前端请求方式
+
+受保护的写请求必须在 Header 中提交 token。业务 JSON 不再包含 `csrf_token`：
+
+```typescript
+const csrfToken = await getClientCSRFToken()
+
+await fetch('/api/posts/123/like', {
+  method: 'POST',
+  headers: {
+    'Content-Type': 'application/json',
+    'X-CSRF-Token': csrfToken,
+  },
+  body: JSON.stringify({ liked: true }),
+})
+```
+
+使用 Header 的原因：
+
+- Proxy 不需要 `request.clone()`；
+- Proxy 不需要解析 JSON、FormData 或文件上传内容；
+- Route Handler 可以独立读取原始请求体；
+- CSRF 校验和业务字段保持分离。
+
+### 4. Proxy 校验
+
+当前 `proxy.ts` 保护 `POST`、`PUT`、`PATCH`、`DELETE` API 请求：
+
+```typescript
+const cookieToken = request.cookies.get('csrf_token')?.value
+const headerToken = request.headers.get('x-csrf-token')
+
+if (!cookieToken || !headerToken || cookieToken !== headerToken) {
+  return NextResponse.json(
+    { error: 'Invalid CSRF token' },
+    { status: 403, headers: { 'X-CSRF-Error': 'token_mismatch' } },
+  )
+}
+```
+
+以下端点不执行该校验：
+
+- `/api/auth/*`；
+- `/api/public/*`；
+- `/api/csrf`。
+
+CSRF 校验只证明请求方能够读取本站 token，不证明用户已经登录。需要登录的 Route Handler 仍必须调用 Supabase `getUser()` 完成身份验证。
+
+### 5. 为什么替换旧方案
+
+旧方案把 token 写入 `user_metadata.csrf_token`，校验时再通过 Supabase Auth 读取。它带来了以下问题：
+
+- `/api/csrf` 需要远程调用 `getSession()` 和 `updateUser()`；
+- Proxy 为每个写请求调用 `getUser()`，业务 Route 又重复鉴权；
+- metadata 更新后，本地 Session/JWT 不一定立即同步；
+- 并发初始化可能让 Session token 与 Cookie token 保存不同版本；
+- CSRF 校验受到 Supabase 网络和服务延迟影响。
+
+CSRF token 是请求校验数据，不是用户档案数据，没有必要持久化到 Supabase metadata。新方案在 Proxy 本地完成字符串比较，不产生远程 Auth 请求。
+
+### 6. 安全边界
+
+当前方案主要防御传统 CSRF：第三方网站可以诱导浏览器携带本站 Cookie，但受同源策略和 CORS 限制，无法读取 token 并设置正确的自定义 Header。
+
+需要注意：
+
+- `httpOnly: false` 是必要设置，因为前端需要读取 token 并写入 Header；
+- CSRF token 不能防御 XSS。攻击者一旦能在本站执行 JavaScript，也能读取 token；
+- 生产环境必须使用 HTTPS，并保留 `Secure` 和 `SameSite` Cookie 属性；
+- CORS 不应允许不可信来源携带凭证并发送 `X-CSRF-Token`；
+- 高风险系统可使用服务端 Session 中保存的 synchronizer token，但应放在低延迟 Session 存储中，而不是用户 metadata。
+
+### 7. 当前涉及文件
+
+- `app/api/csrf/route.ts`：生成或复用 Cookie token；
+- `lib/csrf/client.ts`：客户端 token 读取与请求去重；
+- `components/client-csrf-provider.tsx`：页面初始化；
+- `proxy.ts`：Cookie 与 Header 校验；
+- 各客户端写请求：设置 `X-CSRF-Token` Header。
+
+---
+
+## 历史方案：Session Token + Cookie Token
+
+以下内容用于解释项目之前的实现及其设计思路，当前代码不再采用该方案。
+
+## 📋 历史概述
 
 本项目实现了一套完整的双 CSRF（跨站请求伪造）防护机制，采用"Session Token + Cookie Token"双重验证策略，有效防止 CSRF 攻击，同时确保用户体验的安全性。
 

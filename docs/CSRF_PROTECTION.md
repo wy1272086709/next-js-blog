@@ -1,5 +1,7 @@
 # CSRF Protection Implementation
 
+> 历史文档：本文描述的 Supabase Session metadata + Cookie + Form Token 方案已经停止使用。当前实现采用 Cookie + `X-CSRF-Token` Header 双重提交校验，请以根目录 `csrf.md` 的“当前实现（2026-07 更新）”为准。
+
 本项目实现了完整的 CSRF（跨站请求伪造）防护机制。
 
 ## 🛡️ 安全机制

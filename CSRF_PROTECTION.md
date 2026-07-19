@@ -1,5 +1,7 @@
 # CSRF Protection Implementation
 
+> Historical document: the Supabase user-metadata design below is no longer active. The current implementation compares the `csrf_token` Cookie with the `X-CSRF-Token` request Header. See `csrf.md` for the current design.
+
 ## Overview
 
 This project implements CSRF (Cross-Site Request Forgery) protection using the following approach:

@@ -1,7 +1,6 @@
 'use client'
 
 import { useState } from 'react'
-import { CSRFForm } from '@/components/csrf-form'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
@@ -34,7 +33,6 @@ export function CreatePostForm({ onSuccess, onError }: CreatePostFormProps) {
 
     try {
       const csrfToken = await getClientCSRFToken()
-      // 使用 CSRF Form 组件自动处理 CSRF token
       const response = await fetch('/api/posts', {
         method: 'POST',
         headers: {
@@ -79,12 +77,7 @@ export function CreatePostForm({ onSuccess, onError }: CreatePostFormProps) {
         <CardTitle>创建新文章</CardTitle>
       </CardHeader>
       <CardContent>
-        <CSRFForm
-          action="/api/posts"
-          method="POST"
-          className="space-y-4"
-          onSubmit={handleSubmit}
-        >
+        <form className="space-y-4" onSubmit={handleSubmit}>
           <div className="space-y-2">
             <label htmlFor="title" className="text-sm font-medium">
               标题
@@ -141,7 +134,7 @@ export function CreatePostForm({ onSuccess, onError }: CreatePostFormProps) {
           <Button type="submit" disabled={isSubmitting} className="w-full">
             {isSubmitting ? '创建中...' : '创建文章'}
           </Button>
-        </CSRFForm>
+        </form>
       </CardContent>
     </Card>
   )
