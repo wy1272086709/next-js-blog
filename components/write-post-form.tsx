@@ -11,7 +11,7 @@ import { Label } from "@/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Switch } from "@/components/ui/switch"
 import { Card, CardContent } from "@/components/ui/card"
-import { Loader2 } from "lucide-react"
+import { FileText, Loader2, Upload } from "lucide-react"
 import { RichEditor } from "@/components/react-quill-editor"
 import { CollapsibleMarkdown } from "@/components/collapsible-markdown"
 import { useMarkdownStream } from '@/hooks/use-markdown-preview'
@@ -34,6 +34,60 @@ interface Post {
   published: boolean
 }
 
+type WriteMode = "manual" | "upload"
+
+const MAX_ARTICLE_FILE_SIZE = 16 * 1024 * 1024
+
+const CATEGORY_KEYWORDS = [
+  {
+    categoryTerms: ["ai", "人工智能", "机器学习", "大模型"],
+    contentTerms: ["ai", "人工智能", "机器学习", "深度学习", "大模型", "llm", "openai", "chatgpt", "prompt", "提示词", "agent", "智能体"],
+  },
+  {
+    categoryTerms: ["frontend", "front-end", "前端"],
+    contentTerms: ["前端", "frontend", "html", "css", "javascript", "typescript", "react", "next.js", "nextjs", "vue", "angular", "浏览器", "组件"],
+  },
+  {
+    categoryTerms: ["backend", "back-end", "后端", "服务端"],
+    contentTerms: ["后端", "backend", "服务端", "node.js", "nodejs", "nestjs", "java", "spring", "golang", "python", "django", "数据库", "mysql", "postgresql", "redis", "api"],
+  },
+]
+
+function containsTerm(text: string, term: string) {
+  if (!/^[a-z0-9.-]+$/i.test(term)) return text.includes(term)
+  const escaped = term.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")
+  return new RegExp(`(^|[^a-z0-9])${escaped}([^a-z0-9]|$)`, "i").test(text)
+}
+
+function inferCategory(categories: Category[], filename: string, content: string) {
+  const titleText = filename.replace(/\.(md|markdown|pdf)$/i, "").toLowerCase()
+  const contentText = content.toLowerCase()
+
+  const ranked = categories.map((category) => {
+    const categoryText = `${category.name} ${category.slug}`.toLowerCase()
+    const categoryTerms = [
+      category.name.toLowerCase(),
+      ...category.slug.toLowerCase().split(/[-_\s]+/),
+    ].filter((term) => term.length >= 2)
+
+    let score = categoryTerms.reduce((total, term) => {
+      return total + (containsTerm(titleText, term) ? 8 : 0) + (containsTerm(contentText, term) ? 3 : 0)
+    }, 0)
+
+    for (const group of CATEGORY_KEYWORDS) {
+      if (!group.categoryTerms.some((term) => containsTerm(categoryText, term))) continue
+      score += group.contentTerms.reduce((total, term) => {
+        return total + (containsTerm(titleText, term) ? 5 : 0) + (containsTerm(contentText, term) ? 1 : 0)
+      }, 0)
+    }
+
+    return { category, score }
+  })
+
+  ranked.sort((a, b) => b.score - a.score)
+  return ranked[0]?.score > 0 ? ranked[0].category : null
+}
+
 export function WritePostForm({
   categories,
   post,
@@ -54,6 +108,10 @@ export function WritePostForm({
   const [successMessage, setSuccessMessage] = useState('')
   const [hasSubmitted, setHasSubmitted] = useState(false)
   const [useAIPolish, setUseAIPolish] = useState(false)
+  const [writeMode, setWriteMode] = useState<WriteMode>("manual")
+  const [isParsingFile, setIsParsingFile] = useState(false)
+  const [uploadedFileName, setUploadedFileName] = useState("")
+  const [inferredCategoryName, setInferredCategoryName] = useState("")
   const {
     source,
     isStreaming,
@@ -136,6 +194,65 @@ export function WritePostForm({
   const t = useTranslations("WritePostForm");
   const mutation = usePostMutation();
 
+  const getUploadError = (code?: string) => {
+    if (code === "file_too_large") return t("fileTooLarge")
+    if (code === "unsupported_file_type") return t("unsupportedFileType")
+    if (code === "empty_file_content") return t("emptyFileContent")
+    return t("parseFileFailed")
+  }
+
+  const handleArticleUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0]
+    if (!file) return
+
+    setError(null)
+    setUploadedFileName("")
+    if (inferredCategoryName) setCategoryId("")
+    setInferredCategoryName("")
+
+    const extension = file.name.split(".").pop()?.toLowerCase()
+    if (!extension || !["md", "markdown", "pdf"].includes(extension)) {
+      setError(t("unsupportedFileType"))
+      event.target.value = ""
+      return
+    }
+
+    if (file.size > MAX_ARTICLE_FILE_SIZE) {
+      setError(t("fileTooLarge"))
+      event.target.value = ""
+      return
+    }
+
+    setIsParsingFile(true)
+    try {
+      const formData = new FormData()
+      formData.append("file", file)
+      const csrfToken = await getClientCSRFToken()
+      const response = await fetch("/api/posts/parse-upload", {
+        method: "POST",
+        headers: { "X-CSRF-Token": csrfToken },
+        body: formData,
+      })
+      const data = await response.json()
+
+      if (!response.ok) throw new Error(getUploadError(data.code))
+
+      setTitle(data.title)
+      setContent(data.content)
+      setUploadedFileName(file.name)
+      const inferredCategory = inferCategory(categories, file.name, data.content)
+      if (inferredCategory) {
+        setCategoryId(inferredCategory.id)
+        setInferredCategoryName(inferredCategory.name)
+      }
+    } catch (uploadError) {
+      setError(uploadError instanceof Error ? uploadError.message : t("parseFileFailed"))
+      event.target.value = ""
+    } finally {
+      setIsParsingFile(false)
+    }
+  }
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
     setHasSubmitted(true)
@@ -183,6 +300,70 @@ export function WritePostForm({
       <form onSubmit={handleSubmit}>
         <Card>
           <CardContent className="p-6 space-y-6">
+            {!post && (
+              <>
+                <div className="grid gap-2">
+                  <Label htmlFor="write-mode">{t("writeMode")}</Label>
+                  <Select value={writeMode} onValueChange={(value) => setWriteMode(value as WriteMode)}>
+                    <SelectTrigger id="write-mode" className="w-full sm:w-64">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="manual">{t("manualWrite")}</SelectItem>
+                      <SelectItem value="upload">{t("uploadArticle")}</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                {writeMode === "upload" && (
+                  <div className="grid gap-2">
+                    <Label htmlFor="article-file">{t("articleFile")}</Label>
+                    <div className="rounded-md border border-dashed p-4">
+                      <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
+                        <div className="min-w-0 flex-1">
+                          <Input
+                            id="article-file"
+                            type="file"
+                            accept=".pdf,.md,.markdown,application/pdf,text/markdown,text/plain"
+                            onChange={handleArticleUpload}
+                            disabled={isParsingFile}
+                            className="sr-only"
+                          />
+                          <div className="flex min-w-0 items-center gap-3">
+                            <Label
+                              htmlFor="article-file"
+                              aria-disabled={isParsingFile}
+                              className="inline-flex h-9 shrink-0 cursor-pointer items-center gap-2 rounded-md border bg-background px-3 text-sm font-medium shadow-xs hover:bg-accent hover:text-accent-foreground aria-disabled:pointer-events-none aria-disabled:opacity-50"
+                            >
+                              {isParsingFile ? (
+                                <Loader2 className="h-4 w-4 animate-spin" />
+                              ) : (
+                                <Upload className="h-4 w-4" />
+                              )}
+                              {uploadedFileName ? t("replaceFile") : t("chooseFile")}
+                            </Label>
+                            {uploadedFileName && (
+                              <span className="min-w-0 truncate text-sm" title={uploadedFileName}>
+                                <FileText className="mr-1.5 inline h-4 w-4" />
+                                {uploadedFileName}
+                              </span>
+                            )}
+                          </div>
+                          <p className="mt-2 text-sm text-muted-foreground">
+                            {isParsingFile
+                              ? t("parsingFile")
+                              : uploadedFileName
+                                ? t("fileParsed", { filename: uploadedFileName })
+                                : t("uploadHint")}
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                )}
+              </>
+            )}
+
             <div className="grid gap-2">
               <Label htmlFor="title">{t("title")}</Label>
               <Input
@@ -196,7 +377,13 @@ export function WritePostForm({
 
             <div className="grid gap-2">
               <Label htmlFor="category">{t("category")}</Label>
-              <Select value={categoryId} onValueChange={setCategoryId}>
+              <Select
+                value={categoryId}
+                onValueChange={(value) => {
+                  setCategoryId(value)
+                  setInferredCategoryName("")
+                }}
+              >
                 <SelectTrigger>
                   <SelectValue placeholder={t("categoryPlaceholder")} />
                 </SelectTrigger>
@@ -208,6 +395,11 @@ export function WritePostForm({
                   ))}
                 </SelectContent>
               </Select>
+              {inferredCategoryName && (
+                <p className="text-sm text-muted-foreground">
+                  {t("categoryInferred", { category: inferredCategoryName })}
+                </p>
+              )}
             </div>
 
             <div className="grid gap-2">

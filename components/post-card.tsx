@@ -17,8 +17,11 @@ interface PostCardProps {
     content: string
     view_count: number
     created_at: string
-    username: string
-    profiles: { username: string; avatar_url: string } | null
+    username?: string | null
+    profiles:
+      | { username: string | null; avatar_url: string | null }
+      | { username: string | null; avatar_url: string | null }[]
+      | null
     categories: { name: string; slug: string } | null
     likes: { count: number }[]
   }
@@ -29,10 +32,10 @@ export function PostCard({ post }: PostCardProps) {
   const t = useTranslations("PostCard")
   const dateLocale = locale === "zh-CN" ? zhCN : enUS
   const dateFormat = locale === "zh-CN" ? "M月d日" : "MMM d"
-  const author = post.profiles
+  const author = Array.isArray(post.profiles) ? post.profiles[0] : post.profiles
   const category = post.categories
   const likeCount = post.likes?.[0]?.count || 0
-  const username = post.username
+  const username = author?.username || post.username
 
   return (
     <Card className="hover:border-primary/50 transition-colors">
