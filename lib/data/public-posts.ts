@@ -13,7 +13,7 @@ export const getPublicPosts = unstable_cache(
             *,
             profiles:author_id(username, avatar_url),
             categories:category_id(name, slug),
-            likes(count)
+            likes:post_likes(count)
           `)
           .eq("published", true)
           .order("created_at", { ascending: false }),

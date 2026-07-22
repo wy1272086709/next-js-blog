@@ -156,3 +156,18 @@ Tailwind Preflight 会重置 `ul` 和 `ol` 的默认 `list-style`。Markdown 解
 - 编辑器预览正常、详情页异常时，优先比较两个渲染容器的 CSS，而不是先怀疑内容数据。
 - Markdown UI 应给正文设置明确作用域，避免使用全局 `ul`、`li`、`strong` 选择器。
 - 对 marker 不要只确认“存在”，还要检查颜色、大小和列表缩进是否达到可见性要求。
+
+## 行内代码显示反引号
+
+Tailwind Typography 默认通过 `code::before` 和 `code::after` 伪元素，在行内代码两侧显示反引号。Markdown 实际已经正确生成 `<code>`，这些反引号不是文章原文，也不是解析器输出。
+
+项目在文章详情和编辑器预览作用域中移除了伪元素，并为行内代码设置背景、边框、内边距和等宽字体：
+
+```css
+.article-markdown :not(pre) > code::before,
+.article-markdown :not(pre) > code::after {
+  content: none;
+}
+```
+
+选择器使用 `:not(pre) > code`，确保只影响单反引号生成的行内代码，不影响三反引号代码块及其语法高亮。

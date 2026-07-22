@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server"
+import { revalidateTag } from "next/cache"
 import { createServerClientWithCookies } from "@/lib/supabase/server"
 
 type RouteContext = { params: Promise<{ id: string }> }
@@ -8,23 +9,12 @@ export async function POST(request: Request, { params }: RouteContext) {
   const postId = (await params).id
 
   try {
-    const [authResult, countResult] = await Promise.all([
-      supabase.auth.getUser(),
-      supabase
-        .from("post_likes")
-        .select("*", { count: "exact", head: true })
-        .eq("post_id", postId),
-    ])
+    const authResult = await supabase.auth.getUser()
     const { user } = authResult.data
     const userError = authResult.error
 
     if (userError || !user) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
-    }
-
-    if (countResult.error) {
-      console.error("Failed to count post likes:", countResult.error)
-      return NextResponse.json({ error: "Failed to get like count" }, { status: 500 })
     }
 
     const { liked } = (await request.json()) as { liked?: boolean }
@@ -57,9 +47,18 @@ export async function POST(request: Request, { params }: RouteContext) {
       }
     }
 
-    const previousCount = countResult.count ?? 0
-    const count = liked ? previousCount + 1 : Math.max(0, previousCount - 1)
-    return NextResponse.json({ liked, count })
+    const { count, error: countError } = await supabase
+      .from("post_likes")
+      .select("*", { count: "exact", head: true })
+      .eq("post_id", postId)
+
+    if (countError) {
+      console.error("Failed to count post likes:", countError)
+      return NextResponse.json({ error: "Failed to get like count" }, { status: 500 })
+    }
+
+    revalidateTag("posts", { expire: 0 })
+    return NextResponse.json({ liked, count: count ?? 0 })
   } catch (error) {
     console.error("Failed to update post like:", error)
     return NextResponse.json({ error: "Internal server error" }, { status: 500 })

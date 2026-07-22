@@ -38,7 +38,7 @@ export default async function MyPostsPage({ params }: Props) {
       `
       *,
       categories:category_id(name, slug),
-      likes(count)
+      likes:post_likes(count)
     `
     )
     .eq("author_id", user?.id)

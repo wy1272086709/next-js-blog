@@ -8,6 +8,8 @@ import { Heart, Eye } from "lucide-react"
 import { format } from "date-fns"
 import { zhCN, enUS } from "date-fns/locale"
 import { useLocale, useTranslations } from "next-intl"
+import { useQuery } from "@tanstack/react-query"
+import type { LikeData } from "@/hooks/use-like-mutation"
 
 interface PostCardProps {
   post: {
@@ -34,7 +36,18 @@ export function PostCard({ post }: PostCardProps) {
   const dateFormat = locale === "zh-CN" ? "M月d日" : "MMM d"
   const author = Array.isArray(post.profiles) ? post.profiles[0] : post.profiles
   const category = post.categories
-  const likeCount = post.likes?.[0]?.count || 0
+  const initialLikeCount = post.likes?.[0]?.count || 0
+  const { data: likeData } = useQuery<LikeData>({
+    queryKey: ["post", post.id, "likes"],
+    queryFn: async () => {
+      const response = await fetch(`/api/posts/${post.id}/like`)
+      if (!response.ok) throw new Error("Failed to get post likes")
+      return response.json()
+    },
+    initialData: { count: initialLikeCount, liked: false },
+    initialDataUpdatedAt: 0,
+    staleTime: 1000 * 60 * 5,
+  })
   const username = author?.username || post.username
 
   return (
@@ -81,7 +94,7 @@ export function PostCard({ post }: PostCardProps) {
               </span>
               <span className="flex items-center gap-1">
                 <Heart className="h-4 w-4" />
-                {likeCount}
+                {likeData.count}
               </span>
             </div>
           </div>

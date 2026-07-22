@@ -172,6 +172,25 @@
   margin-top: 0.5rem;
 }
 
+.article-markdown :not(pre) > code,
+.markdown-editor .wmde-markdown :not(pre) > code {
+  border: 1px solid var(--border);
+  border-radius: 0.25rem;
+  background: var(--muted);
+  padding: 0.125rem 0.375rem;
+  color: var(--foreground);
+  font-family: var(--font-mono, ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace);
+  font-size: 0.875em;
+  font-weight: 500;
+}
+
+.article-markdown :not(pre) > code::before,
+.article-markdown :not(pre) > code::after,
+.markdown-editor .wmde-markdown :not(pre) > code::before,
+.markdown-editor .wmde-markdown :not(pre) > code::after {
+  content: none;
+}
+
 /* Markdown 区域内的代码高亮，仅作用于 .markdown-body */
 .markdown-body pre code.hljs,
 .markdown-body code.hljs {

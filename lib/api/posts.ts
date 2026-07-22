@@ -70,7 +70,7 @@ export class PostsAPI {
       .select(`
         *,
         categories:category_id(name, slug),
-        likes(count)
+        likes:post_likes(count)
       `)
       .eq('author_id', userId)
       .order('created_at', { ascending: false })
