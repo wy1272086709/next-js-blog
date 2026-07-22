@@ -212,7 +212,7 @@ export function RichEditor({
   }, [imageAlt, imageUrl, insertImage, t])
 
   return (
-    <div ref={editorRef} className="space-y-4">
+    <div ref={editorRef} className="markdown-editor space-y-4">
       <input
         ref={imageInputRef}
         type="file"

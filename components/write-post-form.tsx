@@ -18,6 +18,7 @@ import { useMarkdownStream } from '@/hooks/use-markdown-preview'
 import { usePostMutation } from '@/hooks/use-post-mutation'
 import { SuccessToast } from "./ui/success-toast"
 import { getClientCSRFToken } from "@/lib/csrf/client"
+import { normalizeLooseNestedLists } from "@/lib/markdown/normalize"
 
 interface Category {
   id: string
@@ -98,7 +99,7 @@ export function WritePostForm({
   userId: string
 }) {
   const [title, setTitle] = useState(post?.title || "")
-  const [content, setContent] = useState(post?.content || "")
+  const [content, setContent] = useState(normalizeLooseNestedLists(post?.content || ""))
   const [excerpt, setExcerpt] = useState(post?.excerpt || "")
   const [categoryId, setCategoryId] = useState(post?.category_id || "")
   const [published, setPublished] = useState(post?.published ?? true)
@@ -238,7 +239,7 @@ export function WritePostForm({
       if (!response.ok) throw new Error(getUploadError(data.code))
 
       setTitle(data.title)
-      setContent(data.content)
+      setContent(normalizeLooseNestedLists(data.content))
       setUploadedFileName(file.name)
       const inferredCategory = inferCategory(categories, file.name, data.content)
       if (inferredCategory) {

@@ -12,6 +12,7 @@ import remarkGfm from "remark-gfm"
 import rehypeHighlight from "rehype-highlight"
 import { CommentSection } from "@/components/comment-section"
 import { getPublicPost } from "@/lib/data/public-posts"
+import { normalizeLooseNestedLists } from "@/lib/markdown/normalize"
 
 export const revalidate = 300
 export const dynamicParams = true
@@ -68,9 +69,9 @@ export default async function PostPage({ params }: Props) {
         </div>
         <LikeButton postId={id} />
       </div>
-      <div className="markdown-body prose prose-neutral dark:prose-invert max-w-none">
+      <div className="article-markdown markdown-body prose prose-neutral dark:prose-invert max-w-none">
         <ReactMarkdown remarkPlugins={[remarkGfm]} rehypePlugins={[rehypeHighlight]}>
-          {post.content || ""}
+          {normalizeLooseNestedLists(post.content || "")}
         </ReactMarkdown>
       </div>
       <CommentSection postId={id} />
