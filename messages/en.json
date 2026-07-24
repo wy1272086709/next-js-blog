@@ -1,18 +1,18 @@
 {
   "metadata": {
-    "title": "Technical Creation & Communication Platform",
-    "description": "Write tech articles • Real-time desktop chat"
+    "title": "Tech Blog",
+    "description": "Technical articles and practical development insights"
   },
   "Header": {
-    "siteName": "Technical Creation & Communication Platform",
+    "siteName": "Tech Blog",
     "posts": "Posts",
     "dashboard": "Dashboard",
     "login": "Login",
     "signUp": "Sign Up"
   },
   "HomePage": {
-    "title": "Technical Creation & Communication Platform",
-    "subtitle": "Write tech articles • Real-time desktop chat",
+    "title": "Tech Blog",
+    "subtitle": "Technical articles and practical development insights",
     "browsePosts": "Browse Posts",
     "startWriting": "Start Writing",
     "categoriesTitle": "Technical Writing",
@@ -21,23 +21,7 @@
     "backend": "Backend",
     "backendDesc": "Node.js, Python, Go, databases, microservices and more",
     "ai": "AI",
-    "aiDesc": "ML, deep learning, LLM, AI applications and more",
-    "chatTitle": "Technical Communication",
-    "chat": "Desktop Chat",
-    "chatDesc": "Choose your platform and download the desktop client",
-    "downloadNow": "Download Now",
-    "windows": "Windows",
-    "macos": "macOS",
-    "download": "Download for",
-    "recommended": "Recommended"
-  },
-  "DownloadPage": {
-    "title": "Download Desktop Chat",
-    "description": "Available for Windows and macOS. Choose your platform to get the installer.",
-    "windows": "Windows",
-    "macos": "macOS",
-    "download": "Download for",
-    "recommended": "Recommended"
+    "aiDesc": "ML, deep learning, LLM, AI applications and more"
   },
   "PostsPage": {
     "allPosts": "All Posts",

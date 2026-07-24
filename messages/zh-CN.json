@@ -1,18 +1,18 @@
 {
   "metadata": {
-    "title": "技术创作与交流平台",
-    "description": "撰写技术文章・桌面端实时聊天"
+    "title": "技术博客",
+    "description": "分享技术文章与开发实践"
   },
   "Header": {
-    "siteName": "技术创作与交流平台",
+    "siteName": "技术博客",
     "posts": "文章",
     "dashboard": "个人中心",
     "login": "登录",
     "signUp": "注册"
   },
   "HomePage": {
-    "title": "技术创作与交流平台",
-    "subtitle": "撰写技术文章・桌面端实时聊天",
+    "title": "技术博客",
+    "subtitle": "分享技术文章与开发实践",
     "browsePosts": "浏览文章",
     "startWriting": "开始写作",
     "categoriesTitle": "技术写作",
@@ -21,23 +21,7 @@
     "backend": "后端开发",
     "backendDesc": "Node.js、Python、Go、数据库、微服务等后端技术文章",
     "ai": "人工智能",
-    "aiDesc": "机器学习、深度学习、LLM、AI 应用开发等前沿技术",
-    "chatTitle": "技术交流",
-    "chat": "桌面端实时聊天",
-    "chatDesc": "选择适合你的系统，下载桌面客户端",
-    "downloadNow": "立即下载",
-    "windows": "Windows",
-    "macos": "macOS",
-    "download": "立即下载",
-    "recommended": "推荐"
-  },
-  "DownloadPage": {
-    "title": "下载桌面端实时聊天",
-    "description": "支持 Windows 和 macOS，选择你的系统下载安装包",
-    "windows": "Windows",
-    "macos": "macOS",
-    "download": "立即下载",
-    "recommended": "推荐"
+    "aiDesc": "机器学习、深度学习、LLM、AI 应用开发等前沿技术"
   },
   "PostsPage": {
     "allPosts": "全部文章",

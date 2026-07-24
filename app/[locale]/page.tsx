@@ -4,7 +4,6 @@ import { Link } from "@/i18n/navigation"
 import { Button } from "@/components/ui/button"
 import { ArrowRight, Code2, Server, Bot } from "lucide-react"
 import { routing } from "@/i18n/routing"
-import { DesktopDownloadPanel } from "@/components/desktop-download-panel"
 
 type Props = { params: Promise<{ locale: string }> }
 
@@ -76,19 +75,6 @@ export default async function HomePage({ params }: Props) {
         </div>
       </section>
 
-      <section className="border-t bg-muted/40 px-6 py-16 md:py-20">
-        <DesktopDownloadPanel
-          compact
-          title={t("chat")}
-          description={t("chatDesc")}
-          windowsLabel={t("windows")}
-          macosLabel={t("macos")}
-          downloadLabel={t("download")}
-          recommendedLabel={t("recommended")}
-          windowsUrl={process.env.NEXT_PUBLIC_CHAT_WINDOWS_DOWNLOAD_URL}
-          macosUrl={process.env.NEXT_PUBLIC_CHAT_MACOS_DOWNLOAD_URL}
-        />
-      </section>
     </div>
   )
 }

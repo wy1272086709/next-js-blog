@@ -147,10 +147,6 @@ REDIS_URL=redis://localhost:6379
 # Supabase 配置
 NEXT_PUBLIC_SUPABASE_URL=your_supabase_url
 NEXT_PUBLIC_SUPABASE_ANON_KEY=your_supabase_anon_key
-
-# Desktop chat installer URLs
-NEXT_PUBLIC_CHAT_WINDOWS_DOWNLOAD_URL=https://example.com/chat-client-windows.exe
-NEXT_PUBLIC_CHAT_MACOS_DOWNLOAD_URL=https://example.com/chat-client-macos.dmg
 ```
 
 ### 数据库设置
