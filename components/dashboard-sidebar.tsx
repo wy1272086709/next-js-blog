@@ -5,6 +5,7 @@ import { cn } from "@/lib/utils"
 import { LayoutDashboard, FileText, PenSquare, Settings, Wand2 } from "lucide-react"
 import { useTranslations } from "next-intl"
 import { Link } from "@/i18n/navigation"
+import { interactionsEnabled } from "@/lib/features"
 
 const sidebarKeys = [
   { href: "/dashboard", key: "overview", icon: LayoutDashboard },
@@ -21,7 +22,7 @@ export function DashboardSidebar() {
   return (
     <aside className="hidden md:block w-56 shrink-0 ml-[24px]">
       <nav className="sticky top-20 space-y-1">
-        {sidebarKeys.map((item) => {
+        {sidebarKeys.filter((item) => interactionsEnabled || item.key !== "writePost").map((item) => {
           const Icon = item.icon
           const isActive = pathname === item.href
           return (

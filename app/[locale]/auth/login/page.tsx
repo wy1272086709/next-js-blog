@@ -1,7 +1,6 @@
 "use client"
 
 import type React from "react"
-import { createClient } from "@/lib/supabase/client"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
@@ -9,6 +8,7 @@ import { Label } from "@/components/ui/label"
 import { useState } from "react"
 import { useTranslations } from "next-intl"
 import { Link, useRouter, getPathname } from "@/i18n/navigation"
+import { getClientCSRFToken } from "@/lib/csrf/client"
 
 export default function LoginPage() {
   const [email, setEmail] = useState("")
@@ -20,12 +20,17 @@ export default function LoginPage() {
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault()
-    const supabase = createClient()
     setIsLoading(true)
     setError(null)
     try {
-      const { error } = await supabase.auth.signInWithPassword({ email, password })
-      if (error) throw error
+      const csrfToken = await getClientCSRFToken()
+      const response = await fetch("/api/auth/login", {
+        method: "POST",
+        headers: { "Content-Type": "application/json", "X-CSRF-Token": csrfToken },
+        body: JSON.stringify({ email, password }),
+      })
+      const result = await response.json()
+      if (!response.ok) throw Object.assign(new Error(result.error), { code: result.code })
       router.push(getPathname({ href: "/dashboard", locale: "" }))
     } catch (err: unknown) {
       if ((err as { code?: string })?.code === "invalid_credentials") {

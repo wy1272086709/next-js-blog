@@ -147,7 +147,12 @@ REDIS_URL=redis://localhost:6379
 # Supabase 配置
 NEXT_PUBLIC_SUPABASE_URL=your_supabase_url
 NEXT_PUBLIC_SUPABASE_ANON_KEY=your_supabase_anon_key
+
+# 注册、登录、评论和点赞总开关；false 表示关闭
+NEXT_PUBLIC_INTERACTIONS_ENABLED=true
 ```
+
+修改环境变量后需要重启开发服务器。未配置该变量时，交互功能默认开启。
 
 ### 数据库设置
 

@@ -4,6 +4,7 @@ import { Link } from "@/i18n/navigation"
 import { Button } from "@/components/ui/button"
 import { ArrowRight, Code2, Server, Bot } from "lucide-react"
 import { routing } from "@/i18n/routing"
+import { interactionsEnabled } from "@/lib/features"
 
 type Props = { params: Promise<{ locale: string }> }
 
@@ -32,9 +33,11 @@ export default async function HomePage({ params }: Props) {
                 {t("browsePosts")} <ArrowRight className="ml-2 h-4 w-4" />
               </Link>
             </Button>
-            <Button size="lg" variant="outline" asChild>
-              <Link href="/dashboard/write">{t("startWriting")}</Link>
-            </Button>
+            {interactionsEnabled && (
+              <Button size="lg" variant="outline" asChild>
+                <Link href="/dashboard/write">{t("startWriting")}</Link>
+              </Button>
+            )}
           </div>
         </div>
       </section>

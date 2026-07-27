@@ -2,6 +2,7 @@ import { createServerClientWithCookies } from "@/lib/supabase/server"
 import createMiddleware from "next-intl/middleware"
 import { routing } from "./i18n/routing"
 import { NextResponse, type NextRequest } from "next/server"
+import { interactionsEnabled } from "./lib/features"
 
 /**
  * 国际化中间件 - 处理语言路由
@@ -12,23 +13,33 @@ const intlMiddleware = createMiddleware(routing)
  * 认证中间件 - 处理用户认证和 CSRF 保护
  */
 async function authMiddleware(request: NextRequest) {
-  const isApiRoute = request.nextUrl.pathname.startsWith('/api/')
+  const isApiRoute = request.nextUrl.pathname.startsWith("/api/")
   if (isApiRoute) {
-    const protectedMethods = ['POST', 'PUT', 'DELETE', 'PATCH']
+    const disabledInteractionWrite =
+      !interactionsEnabled &&
+      request.method === "POST" &&
+      (/^\/api\/auth\/(?:login|sign-up)\/?$/.test(request.nextUrl.pathname) ||
+        /^\/api\/posts\/[^/]+\/(?:like|comments)\/?$/.test(request.nextUrl.pathname) ||
+        /^\/api\/comments\/[^/]+\/like\/?$/.test(request.nextUrl.pathname))
+
+    if (disabledInteractionWrite) {
+      return NextResponse.json({ error: "Interactions are disabled" }, { status: 403 })
+    }
+
+    const protectedMethods = ["POST", "PUT", "DELETE", "PATCH"]
     const isProtectedMethod = protectedMethods.includes(request.method)
     const isExcludedApi =
-      request.nextUrl.pathname.includes('/api/auth/') ||
-      request.nextUrl.pathname.includes('/api/public/') ||
-      request.nextUrl.pathname.includes('/api/csrf')
+      request.nextUrl.pathname.includes("/api/public/") ||
+      request.nextUrl.pathname.includes("/api/csrf")
 
     if (isProtectedMethod && !isExcludedApi) {
-      const cookieToken = request.cookies.get('csrf_token')?.value
-      const headerToken = request.headers.get('x-csrf-token')
+      const cookieToken = request.cookies.get("csrf_token")?.value
+      const headerToken = request.headers.get("x-csrf-token")
 
       if (!cookieToken || !headerToken || cookieToken !== headerToken) {
         return NextResponse.json(
-          { error: 'Invalid CSRF token' },
-          { status: 403, headers: { 'X-CSRF-Error': 'token_mismatch' } }
+          { error: "Invalid CSRF token" },
+          { status: 403, headers: { "X-CSRF-Error": "token_mismatch" } },
         )
       }
     }
@@ -36,9 +47,30 @@ async function authMiddleware(request: NextRequest) {
     return NextResponse.next({ request })
   }
 
+  if (!interactionsEnabled) {
+    const writeRouteMatch = request.nextUrl.pathname.match(
+      /^\/(zh-CN|en)\/dashboard\/write\/?$/,
+    )
+    if (writeRouteMatch) {
+      const url = request.nextUrl.clone()
+      url.pathname = `/${writeRouteMatch[1]}`
+      url.search = ""
+      return NextResponse.redirect(url)
+    }
+
+    const authRouteMatch = request.nextUrl.pathname.match(
+      /^\/(zh-CN|en)\/auth\/(?:login|sign-up|sign-up-success)\/?$/,
+    )
+    if (authRouteMatch) {
+      const url = request.nextUrl.clone()
+      url.pathname = `/${authRouteMatch[1]}`
+      return NextResponse.redirect(url)
+    }
+  }
+
   let supabaseResponse = NextResponse.next({
     request,
-  });
+  })
   // 创建一个特殊的cookie store，使用request.cookies
   const cookieStore = {
     getAll: () => request.cookies.getAll(),
@@ -50,14 +82,14 @@ async function authMiddleware(request: NextRequest) {
       supabaseResponse = NextResponse.next({
         request,
       })
-    }
+    },
   }
 
   const supabase = await createServerClientWithCookies(cookieStore)
 
   const {
     data: { user },
-  } = await supabase.auth.getUser();
+  } = await supabase.auth.getUser()
 
   // 保护个人中心路由（支持 locale 前缀如 /zh-CN/dashboard）
   const pathname = request.nextUrl.pathname
@@ -88,7 +120,7 @@ export default function middleware(request: NextRequest) {
   const pathname = request.nextUrl.pathname
 
   // API 路由不参与页面语言重定向，否则 /api 会在 locale 路径间循环。
-  if (pathname.startsWith('/api/')) {
+  if (pathname.startsWith("/api/")) {
     return authMiddleware(request)
   }
 

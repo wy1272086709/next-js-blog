@@ -10,6 +10,7 @@ import { zhCN, enUS } from "date-fns/locale"
 import { useLocale, useTranslations } from "next-intl"
 import { useQuery } from "@tanstack/react-query"
 import type { LikeData } from "@/hooks/use-like-mutation"
+import { interactionsEnabled } from "@/lib/features"
 
 interface PostCardProps {
   post: {
@@ -47,6 +48,7 @@ export function PostCard({ post }: PostCardProps) {
     initialData: { count: initialLikeCount, liked: false },
     initialDataUpdatedAt: 0,
     staleTime: 1000 * 60 * 5,
+    enabled: interactionsEnabled,
   })
   const username = author?.username || post.username
 
@@ -61,7 +63,9 @@ export function PostCard({ post }: PostCardProps) {
                   {category.name}
                 </Badge>
               )}
-              <CardTitle className="text-xl line-clamp-2">{post.title}</CardTitle>
+              <CardTitle className="text-xl line-clamp-2">
+                {post.title}
+              </CardTitle>
             </div>
           </div>
         </CardHeader>
@@ -72,7 +76,9 @@ export function PostCard({ post }: PostCardProps) {
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
               <Avatar className="h-6 w-6">
-                <AvatarImage src={author?.avatar_url ? author.avatar_url : undefined} />
+                <AvatarImage
+                  src={author?.avatar_url ? author.avatar_url : undefined}
+                />
                 <AvatarFallback>
                   {username?.charAt(0).toUpperCase()}
                 </AvatarFallback>
@@ -92,10 +98,12 @@ export function PostCard({ post }: PostCardProps) {
                 <Eye className="h-4 w-4" />
                 {post.view_count || 0}
               </span>
-              <span className="flex items-center gap-1">
-                <Heart className="h-4 w-4" />
-                {likeData.count}
-              </span>
+              {interactionsEnabled && (
+                <span className="flex items-center gap-1">
+                  <Heart className="h-4 w-4" />
+                  {likeData.count}
+                </span>
+              )}
             </div>
           </div>
         </CardContent>

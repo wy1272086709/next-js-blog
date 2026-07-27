@@ -7,6 +7,7 @@ import { PenSquare } from "lucide-react"
 import { useTranslations } from "next-intl"
 import { Link, useRouter } from "@/i18n/navigation"
 import { useAuth } from "@/lib/auth-context"
+import { interactionsEnabled } from "@/lib/features"
 
 export function ClientHeader() {
   const { user, loading, signOut } = useAuth()
@@ -64,18 +65,19 @@ export function ClientHeader() {
         <div className="flex items-center gap-2">
           <ThemeToggle />
           <LanguageSwitcher />
-          {user ? (
-            <UserNav user={user} onSignOut={signOut} />
-          ) : (
-            <div className="flex items-center gap-2">
-              <Button variant="ghost" asChild>
-                <Link href="/auth/login">{t("login")}</Link>
-              </Button>
-              <Button asChild>
-                <Link href="/auth/sign-up">{t("signUp")}</Link>
-              </Button>
-            </div>
-          )}
+          {interactionsEnabled &&
+            (user ? (
+              <UserNav user={user} onSignOut={signOut} />
+            ) : (
+              <div className="flex items-center gap-2">
+                <Button variant="ghost" asChild>
+                  <Link href="/auth/login">{t("login")}</Link>
+                </Button>
+                <Button asChild>
+                  <Link href="/auth/sign-up">{t("signUp")}</Link>
+                </Button>
+              </div>
+            ))}
         </div>
       </div>
     </header>

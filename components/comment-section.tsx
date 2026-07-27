@@ -8,7 +8,7 @@ import { ThumbsUp, Reply, MessageSquare } from 'lucide-react'
 import { zhCN, enUS } from 'date-fns/locale'
 import { useLocale, useTranslations } from 'next-intl'
 import { Link } from '@/i18n/navigation'
-import { ensureUserProfile } from '@/lib/utils/profiles'
+import { getClientCSRFToken } from '@/lib/csrf/client'
 import { CommentList } from '@/components/comment-list'
 import { Avatar, AvatarFallback, AvatarImage } from './ui/avatar'
 
@@ -32,6 +32,15 @@ interface CommentSectionProps {
   postId: string
   initialUser?: any
   commentCount?: number
+}
+
+function findCommentById(comments: Comment[], targetId: string): Comment | null {
+  for (const comment of comments) {
+    if (comment.id === targetId) return comment
+    const reply = findCommentById(comment.replies || [], targetId)
+    if (reply) return reply
+  }
+  return null
 }
 
 export function CommentSection({ postId, initialUser }: CommentSectionProps) {
@@ -167,39 +176,19 @@ export function CommentSection({ postId, initialUser }: CommentSectionProps) {
     e.preventDefault()
     if (!commentText.trim() || !user) return
 
-    const clientSupabase = createClient()
+    const csrfToken = await getClientCSRFToken()
+    const response = await fetch(`/api/posts/${postId}/comments`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'X-CSRF-Token': csrfToken },
+      body: JSON.stringify({ content: commentText, parentId: null })
+    })
 
-    try {
-      // 确保用户资料存在
-      await ensureUserProfile(user.id)
-    } catch (error) {
-      console.error('Error creating user profile:', error)
+    if (!response.ok) {
+      console.error('Error submitting comment:', await response.json())
       return
     }
 
-    const { data: newComment, error } = await clientSupabase
-      .from('comments')
-      .insert({
-        content: commentText,
-        author_id: user.id,
-        post_id: postId,
-        parent_id: null
-      })
-      .select(`
-        id,
-        content,
-        author_id,
-        post_id,
-        parent_id,
-        created_at,
-        profiles:author_id(username, avatar_url)
-      `)
-      .single()
-
-    if (error) {
-      console.error('Error submitting comment:', error)
-      return
-    }
+    const { data: newComment } = await response.json()
 
     setComments([...comments, {
       ...newComment,
@@ -219,39 +208,19 @@ export function CommentSection({ postId, initialUser }: CommentSectionProps) {
     e.preventDefault()
     if (!replyText.trim() || !user || !replyingTo) return
 
-    const clientSupabase = createClient()
+    const csrfToken = await getClientCSRFToken()
+    const response = await fetch(`/api/posts/${postId}/comments`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'X-CSRF-Token': csrfToken },
+      body: JSON.stringify({ content: replyText, parentId: replyingTo })
+    })
 
-    try {
-      // 确保用户资料存在
-      await ensureUserProfile(user.id)
-    } catch (error) {
-      console.error('Error creating user profile:', error)
+    if (!response.ok) {
+      console.error('Error submitting reply:', await response.json())
       return
     }
 
-    const { data: newReply, error } = await clientSupabase
-      .from('comments')
-      .insert({
-        content: replyText,
-        author_id: user.id,
-        post_id: postId,
-        parent_id: replyingTo
-      })
-      .select(`
-        id,
-        content,
-        author_id,
-        post_id,
-        parent_id,
-        created_at,
-        profiles:author_id(username, avatar_url)
-      `)
-      .single()
-
-    if (error) {
-      console.error('Error submitting reply:', error)
-      return
-    }
+    const { data: newReply } = await response.json()
 
     const newReplyComment = {
       ...newReply,
@@ -294,30 +263,20 @@ export function CommentSection({ postId, initialUser }: CommentSectionProps) {
   const handleLikeComment = async (commentId: string, _isReply = false) => {
     if (!user) return
 
-    const clientSupabase = createClient()
+    const commentToLike = findCommentById(comments, commentId)
+    if (!commentToLike) return
 
-    // 检查是否已点赞
-    const { data: existingLike } = await clientSupabase
-      .from('comment_likes')
-      .select('id')
-      .eq('comment_id', commentId)
-      .eq('user_id', user.id)
-      .single()
+    const liked = !commentToLike.user_has_liked
+    const csrfToken = await getClientCSRFToken()
+    const response = await fetch(`/api/comments/${commentId}/like`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'X-CSRF-Token': csrfToken },
+      body: JSON.stringify({ liked })
+    })
 
-    if (existingLike) {
-      // 取消点赞
-      await clientSupabase
-        .from('comment_likes')
-        .delete()
-        .eq('id', existingLike.id)
-    } else {
-      // 添加点赞
-      await clientSupabase
-        .from('comment_likes')
-        .insert({
-          comment_id: commentId,
-          user_id: user.id
-        })
+    if (!response.ok) {
+      console.error('Error liking comment:', await response.json())
+      return
     }
 
     // 更新本地状态 - 使用深度遍历来更新嵌套的评论
@@ -363,8 +322,8 @@ export function CommentSection({ postId, initialUser }: CommentSectionProps) {
       // 创建更新后的评论对象
       const updatedComment: Comment = {
         ...commentToUpdate,
-        likes_count: existingLike ? commentToUpdate.likes_count - 1 : commentToUpdate.likes_count + 1,
-        user_has_liked: !existingLike
+        likes_count: liked ? commentToUpdate.likes_count + 1 : commentToUpdate.likes_count - 1,
+        user_has_liked: liked
       }
 
       return findAndUpdateComment(prevComments, commentId, updatedComment)

@@ -5,6 +5,7 @@ import { LanguageSwitcher } from "@/components/language-switcher"
 import { PenSquare } from "lucide-react"
 import { getTranslations } from "next-intl/server"
 import { Link } from "@/i18n/navigation"
+import { interactionsEnabled } from "@/lib/features"
 
 export async function Header() {
   const supabase = await createClient()
@@ -40,18 +41,19 @@ export async function Header() {
         </div>
         <div className="flex items-center gap-2">
           <LanguageSwitcher />
-          {user ? (
-            <UserNav user={user} />
-          ) : (
-            <div className="flex items-center gap-2">
-              <Button variant="ghost" asChild>
-                <Link href="/auth/login">{t("login")}</Link>
-              </Button>
-              <Button asChild>
-                <Link href="/auth/sign-up">{t("signUp")}</Link>
-              </Button>
-            </div>
-          )}
+          {interactionsEnabled &&
+            (user ? (
+              <UserNav user={user} />
+            ) : (
+              <div className="flex items-center gap-2">
+                <Button variant="ghost" asChild>
+                  <Link href="/auth/login">{t("login")}</Link>
+                </Button>
+                <Button asChild>
+                  <Link href="/auth/sign-up">{t("signUp")}</Link>
+                </Button>
+              </div>
+            ))}
         </div>
       </div>
     </header>

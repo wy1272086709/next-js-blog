@@ -1,10 +1,18 @@
 import { NextResponse } from "next/server"
 import { revalidateTag } from "next/cache"
 import { createServerClientWithCookies } from "@/lib/supabase/server"
+import { interactionsEnabled } from "@/lib/features"
 
 type RouteContext = { params: Promise<{ id: string }> }
 
 export async function POST(request: Request, { params }: RouteContext) {
+  if (!interactionsEnabled) {
+    return NextResponse.json(
+      { error: "Interactions are disabled" },
+      { status: 403 },
+    )
+  }
+
   const supabase = await createServerClientWithCookies()
   const postId = (await params).id
 
@@ -31,19 +39,25 @@ export async function POST(request: Request, { params }: RouteContext) {
 
       if (error) {
         console.error("Failed to unlike post:", error)
-        return NextResponse.json({ error: "Failed to unlike post" }, { status: 500 })
+        return NextResponse.json(
+          { error: "Failed to unlike post" },
+          { status: 500 },
+        )
       }
     } else {
       const { error } = await supabase
         .from("post_likes")
         .upsert(
           { post_id: postId, user_id: user.id },
-          { onConflict: "post_id,user_id", ignoreDuplicates: true }
+          { onConflict: "post_id,user_id", ignoreDuplicates: true },
         )
 
       if (error) {
         console.error("Failed to like post:", error)
-        return NextResponse.json({ error: "Failed to like post" }, { status: 500 })
+        return NextResponse.json(
+          { error: "Failed to like post" },
+          { status: 500 },
+        )
       }
     }
 
@@ -54,14 +68,20 @@ export async function POST(request: Request, { params }: RouteContext) {
 
     if (countError) {
       console.error("Failed to count post likes:", countError)
-      return NextResponse.json({ error: "Failed to get like count" }, { status: 500 })
+      return NextResponse.json(
+        { error: "Failed to get like count" },
+        { status: 500 },
+      )
     }
 
     revalidateTag("posts", { expire: 0 })
     return NextResponse.json({ liked, count: count ?? 0 })
   } catch (error) {
     console.error("Failed to update post like:", error)
-    return NextResponse.json({ error: "Internal server error" }, { status: 500 })
+    return NextResponse.json(
+      { error: "Internal server error" },
+      { status: 500 },
+    )
   }
 }
 
@@ -94,7 +114,10 @@ export async function GET(_request: Request, { params }: RouteContext) {
 
     if (countError || likeError) {
       console.error("Failed to get post likes:", countError || likeError)
-      return NextResponse.json({ error: "Failed to get likes" }, { status: 500 })
+      return NextResponse.json(
+        { error: "Failed to get likes" },
+        { status: 500 },
+      )
     }
 
     return NextResponse.json({
@@ -103,6 +126,9 @@ export async function GET(_request: Request, { params }: RouteContext) {
     })
   } catch (error) {
     console.error("Failed to get post likes:", error)
-    return NextResponse.json({ error: "Internal server error" }, { status: 500 })
+    return NextResponse.json(
+      { error: "Internal server error" },
+      { status: 500 },
+    )
   }
 }

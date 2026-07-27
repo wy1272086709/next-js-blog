@@ -10,6 +10,7 @@ import { format } from "date-fns"
 import { zhCN, enUS } from "date-fns/locale"
 import { DeletePostButton } from "@/components/delete-post-button"
 import { routing } from "@/i18n/routing"
+import { interactionsEnabled } from "@/lib/features"
 
 type Props = { params: Promise<{ locale: string }> }
 
@@ -51,12 +52,14 @@ export default async function MyPostsPage({ params }: Props) {
           <h1 className="text-2xl font-bold">{t("myPostsTitle")}</h1>
           <p className="text-muted-foreground">{t("myPostsDesc")}</p>
         </div>
-        <Button asChild>
-          <Link href="/dashboard/write">
-            <PenSquare className="mr-2 h-4 w-4" />
-            {t("writePost")}
-          </Link>
-        </Button>
+        {interactionsEnabled && (
+          <Button asChild>
+            <Link href="/dashboard/write">
+              <PenSquare className="mr-2 h-4 w-4" />
+              {t("writePost")}
+            </Link>
+          </Button>
+        )}
       </div>
       {posts && posts.length > 0 ? (
         <div className="space-y-4">
@@ -96,12 +99,14 @@ export default async function MyPostsPage({ params }: Props) {
                       </div>
                     </div>
                     <div className="flex items-center gap-2">
-                      <Button variant="ghost" size="icon" asChild>
-                        <Link href={`/dashboard/write?edit=${post.id}`}>
-                          <Edit className="h-4 w-4" />
-                          <span className="sr-only">{t("edit")}</span>
-                        </Link>
-                      </Button>
+                      {interactionsEnabled && (
+                        <Button variant="ghost" size="icon" asChild>
+                          <Link href={`/dashboard/write?edit=${post.id}`}>
+                            <Edit className="h-4 w-4" />
+                            <span className="sr-only">{t("edit")}</span>
+                          </Link>
+                        </Button>
+                      )}
                       <DeletePostButton postId={post.id} />
                     </div>
                   </div>
@@ -114,12 +119,14 @@ export default async function MyPostsPage({ params }: Props) {
         <Card>
           <CardContent className="py-16 text-center text-muted-foreground">
             <p>{t("noMyPosts")}</p>
-            <Button asChild className="mt-4">
-              <Link href="/dashboard/write">
-                <PenSquare className="mr-2 h-4 w-4" />
-                {t("writeFirstPost")}
-              </Link>
-            </Button>
+            {interactionsEnabled && (
+              <Button asChild className="mt-4">
+                <Link href="/dashboard/write">
+                  <PenSquare className="mr-2 h-4 w-4" />
+                  {t("writeFirstPost")}
+                </Link>
+              </Button>
+            )}
           </CardContent>
         </Card>
       )}

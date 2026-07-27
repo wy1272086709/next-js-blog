@@ -15,6 +15,7 @@ import type { User } from "@supabase/supabase-js"
 import { LogOut, UserIcon, PenSquare } from "lucide-react"
 import { useTranslations } from "next-intl"
 import { Link, useRouter, getPathname } from "@/i18n/navigation"
+import { interactionsEnabled } from "@/lib/features"
 
 export function UserNav({ user, onSignOut }: { user: User; onSignOut?: () => Promise<void> }) {
   const router = useRouter()
@@ -65,12 +66,14 @@ export function UserNav({ user, onSignOut }: { user: User; onSignOut?: () => Pro
             {t("dashboard")}
           </Link>
         </DropdownMenuItem>
-        <DropdownMenuItem asChild>
-          <Link href="/dashboard/write">
-            <PenSquare className="mr-2 h-4 w-4" />
-            {t("writePost")}
-          </Link>
-        </DropdownMenuItem>
+        {interactionsEnabled && (
+          <DropdownMenuItem asChild>
+            <Link href="/dashboard/write">
+              <PenSquare className="mr-2 h-4 w-4" />
+              {t("writePost")}
+            </Link>
+          </DropdownMenuItem>
+        )}
         <DropdownMenuSeparator />
         <DropdownMenuItem onClick={handleSignOut}>
           <LogOut className="mr-2 h-4 w-4" />
