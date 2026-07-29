@@ -14,23 +14,18 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog"
 import { Trash2 } from "lucide-react"
-import { createClient } from "@/lib/supabase/client"
-import { useRouter } from "next/navigation"
 import { useTranslations } from "next-intl"
 import { ClientOnly } from "@/components/ui/client-only"
+import { deletePost } from "@/app/actions/post-actions"
 
 export function DeletePostButton({ postId }: { postId: string }) {
   const [isLoading, setIsLoading] = useState(false)
-  const router = useRouter()
   const t = useTranslations("DeletePostButton")
 
   const handleDelete = async () => {
     setIsLoading(true)
-    const supabase = createClient()
-
     try {
-      await supabase.from("posts").delete().eq("id", postId)
-      router.refresh()
+      await deletePost(postId)
     } catch (error) {
       console.error("删除失败:", error)
     } finally {

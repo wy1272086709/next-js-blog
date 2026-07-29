@@ -53,7 +53,7 @@ export default async function WritePage({ params, searchParams }: Props) {
           {post ? t("editDesc") : t("writeDesc")}
         </p>
       </div>
-      <WritePostForm categories={categories || []} post={post} userId={user.id} />
+      <WritePostForm categories={categories || []} post={post} />
     </div>
   )
 }

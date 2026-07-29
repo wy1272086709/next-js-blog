@@ -20,49 +20,8 @@ export interface Post {
   }>
 }
 
-export interface CreatePostData {
-  title: string
-  content: string
-  excerpt?: string
-  category_id?: string | null
-  published: boolean
-}
-
-export interface UpdatePostData extends Partial<CreatePostData> {
-  id: string
-}
-
 export class PostsAPI {
   private supabase = createClient()
-
-  async createPost(data: CreatePostData & { author_id: string }) {
-    const { data: postData, error } = await this.supabase
-      .from('posts')
-      .insert({
-        ...data,
-        updated_at: new Date().toISOString(),
-      })
-      .select()
-      .single()
-
-    if (error) throw error
-    return postData
-  }
-
-  async updatePost(data: UpdatePostData & { author_id: string }) {
-    const { data: postData, error } = await this.supabase
-      .from('posts')
-      .update({
-        ...data,
-        updated_at: new Date().toISOString(),
-      })
-      .eq('id', data.id)
-      .select()
-      .single()
-
-    if (error) throw error
-    return postData
-  }
 
   async getUserPosts(userId: string, limit = 10, offset = 0) {
     const { data, error } = await this.supabase
@@ -78,11 +37,6 @@ export class PostsAPI {
 
     if (error) throw error
     return data
-  }
-
-  async deletePost(id: string) {
-    const { error } = await this.supabase.from('posts').delete().eq('id', id)
-    if (error) throw error
   }
 
   // Clear cache by forcing a refetch

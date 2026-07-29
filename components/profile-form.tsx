@@ -3,15 +3,15 @@
 import type React from "react"
 
 import { useState } from "react"
-import { createClient } from "@/lib/supabase/client"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
 import { Label } from "@/components/ui/label"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { useRouter } from "next/navigation"
 import type { User } from "@supabase/supabase-js"
 import { useTranslations } from "next-intl"
+import { updateProfile } from "@/app/actions/profile-actions"
+import { useAuth } from "@/lib/auth-context"
 
 interface Profile {
   id: string
@@ -26,33 +26,17 @@ export function ProfileForm({ user, profile }: { user: User; profile: Profile | 
   const [bio, setBio] = useState(profile?.bio || "")
   const [isLoading, setIsLoading] = useState(false)
   const [message, setMessage] = useState<{ type: "success" | "error"; text: string } | null>(null)
-  const router = useRouter()
+  const { refreshUser } = useAuth()
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setIsLoading(true)
     setMessage(null)
 
-    const supabase = createClient()
-
     try {
-      // 更新或插入 profile
-      const { error } = await supabase.from("profiles").upsert({
-        id: user.id,
-        username,
-        bio,
-        updated_at: new Date().toISOString(),
-      })
-
-      if (error) throw error
-
-      // 更新 user metadata
-      await supabase.auth.updateUser({
-        data: { username },
-      })
-
+      await updateProfile({ username, bio })
+      await refreshUser()
       setMessage({ type: "success", text: t("saved") })
-      router.refresh()
     } catch (error) {
       setMessage({ type: "error", text: error instanceof Error ? error.message : t("updateFailed") })
     } finally {

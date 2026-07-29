@@ -2,7 +2,10 @@ import { type NextRequest, NextResponse } from 'next/server'
 import { generateCSRFToken } from '@/lib/csrf/utils'
 
 export async function GET(request: NextRequest) {
-  const token = request.cookies.get('csrf_token')?.value ?? generateCSRFToken()
+  const forceRefresh = request.nextUrl.searchParams.get('refresh') === '1'
+  const token = forceRefresh
+    ? generateCSRFToken()
+    : request.cookies.get('csrf_token')?.value ?? generateCSRFToken()
 
   const response = NextResponse.json({ token })
 

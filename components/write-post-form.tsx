@@ -92,11 +92,9 @@ function inferCategory(categories: Category[], filename: string, content: string
 export function WritePostForm({
   categories,
   post,
-  userId,
 }: {
   categories: Category[]
   post: Post | null
-  userId: string
 }) {
   const [title, setTitle] = useState(post?.title || "")
   const [content, setContent] = useState(normalizeLooseNestedLists(post?.content || ""))
@@ -269,7 +267,6 @@ export function WritePostForm({
       excerpt: excerpt || content.substring(0, 150),
       category_id: categoryId || null,
       published,
-      author_id: userId,
     }
 
     mutation.mutate(

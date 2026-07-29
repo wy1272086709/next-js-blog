@@ -21,7 +21,7 @@ export default async function SettingsPage({ params }: Props) {
     data: { user },
   } = await supabase.auth.getUser()
 
-  if (!user) redirect("/auth/login")
+  if (!user) return redirect({ href: "/auth/login", locale })
 
   const { data: profile } = await supabase
     .from("profiles")

@@ -1,71 +1,56 @@
-'use server'
+"use server"
 
-import { createClient } from '@/lib/supabase/server'
-import { revalidatePath } from 'next/cache'
+import { revalidatePath, revalidateTag } from "next/cache"
+import { z } from "zod"
+import { routing } from "@/i18n/routing"
+import { interactionsEnabled } from "@/lib/features"
+import { createClient } from "@/lib/supabase/server"
 
-export async function createProfileIfNotExists(userId: string) {
+const profileSchema = z.object({
+  username: z.string().trim().min(1).max(50),
+  bio: z.string().max(1000),
+})
+
+export async function updateProfile(input: unknown) {
+  if (!interactionsEnabled) throw new Error("Interactions are disabled")
+
+  const parsed = profileSchema.safeParse(input)
+  if (!parsed.success) throw new Error("Invalid profile data")
+
   const supabase = await createClient()
+  const { data: authData, error: authError } = await supabase.auth.getUser()
+  if (authError || !authData.user) throw new Error("Unauthorized")
 
-  // 检查 profile 是否存在
-  const { data: profile, error } = await supabase
-    .from('profiles')
-    .select('id')
-    .eq('id', userId)
-    .single()
-
-  if (error && error.code !== 'PGRST116') { // PGRST116 = no rows returned
-    throw new Error(`Failed to check profile: ${error.message}`)
-  }
-
-  // 如果 profile 不存在，创建它
-  if (!profile) {
-    const { error: insertError } = await supabase
-      .from('profiles')
-      .insert({
-        id: userId,
-        username: `user_${userId.slice(-6)}`, // 使用 user_ 前缀加用户 ID 的最后6位作为默认用户名
-        created_at: new Date().toISOString(),
-        updated_at: new Date().toISOString()
-      })
-
-    if (insertError) {
-      throw new Error(`Failed to create profile: ${insertError.message}`)
-    }
-
-    // 重新获取创建的 profile
-    const { data: newProfile } = await supabase
-      .from('profiles')
-      .select('*')
-      .eq('id', userId)
-      .single()
-
-    return newProfile
-  }
-
-  return profile
-}
-
-export async function updateProfile(userId: string, updates: {
-  username?: string
-  avatar_url?: string
-  bio?: string
-}) {
-  const supabase = await createClient()
-
-  const { data: profile, error } = await supabase
-    .from('profiles')
-    .update({
-      ...updates,
-      updated_at: new Date().toISOString()
+  const { username, bio } = parsed.data
+  const { data: profile, error: profileError } = await supabase
+    .from("profiles")
+    .upsert({
+      id: authData.user.id,
+      username,
+      bio,
+      updated_at: new Date().toISOString(),
     })
-    .eq('id', userId)
     .select()
     .single()
 
-  if (error) {
-    throw new Error(`Failed to update profile: ${error.message}`)
+  if (profileError) {
+    console.error("Failed to update profile:", profileError)
+    throw new Error("Failed to update profile")
   }
 
-  revalidatePath('/profile', 'page')
+  const { error: metadataError } = await supabase.auth.updateUser({
+    data: { username },
+  })
+  if (metadataError) {
+    console.error("Failed to update user metadata:", metadataError)
+    throw new Error("Failed to update user metadata")
+  }
+
+  for (const locale of routing.locales) {
+    revalidatePath(`/${locale}/dashboard/settings`, "page")
+    revalidatePath(`/${locale}/dashboard`, "page")
+  }
+  revalidateTag("posts", { expire: 0 })
+
   return profile
 }

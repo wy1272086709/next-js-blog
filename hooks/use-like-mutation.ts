@@ -7,7 +7,7 @@ import { useTranslations } from 'next-intl'
 import { useRouter, getPathname } from '@/i18n/navigation'
 import type { User } from '@supabase/supabase-js'
 import { useState, useEffect, useCallback } from 'react'
-import { getClientCSRFToken } from '@/lib/csrf/client'
+import { fetchWithCSRF } from '@/lib/csrf/client'
 
 export interface LikeData {
   count: number
@@ -52,13 +52,10 @@ export function useLikeMutation({ postId, initialData, enabled = true }: UseLike
         throw new Error('请先登录')
       }
 
-      const csrfToken = await getClientCSRFToken()
-
-      const response = await fetch(`/api/posts/${postId}/like`, {
+      const response = await fetchWithCSRF(`/api/posts/${postId}/like`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'X-CSRF-Token': csrfToken,
         },
         body: JSON.stringify({ liked }),
       })

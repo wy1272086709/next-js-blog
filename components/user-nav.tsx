@@ -10,29 +10,19 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
-import { createClient } from "@/lib/supabase/client"
 import type { User } from "@supabase/supabase-js"
 import { LogOut, UserIcon, PenSquare } from "lucide-react"
 import { useTranslations } from "next-intl"
-import { Link, useRouter, getPathname } from "@/i18n/navigation"
+import { Link } from "@/i18n/navigation"
 import { interactionsEnabled } from "@/lib/features"
+import { useAuth } from "@/lib/auth-context"
 
-export function UserNav({ user, onSignOut }: { user: User; onSignOut?: () => Promise<void> }) {
-  const router = useRouter()
+export function UserNav({ user }: { user: User }) {
+  const { signOut } = useAuth()
   const t = useTranslations("UserNav")
 
   const handleSignOut = async () => {
-    // 使用传入的 onSignOut（来自 AuthContext）
-    if (onSignOut) {
-      await onSignOut()
-    } else {
-      // fallback 到原来的逻辑
-      const supabase = createClient()
-      await supabase.auth.signOut()
-      const path = getPathname({ href: "/", locale: "" });
-      router.push(path)
-      router.refresh()
-    }
+    await signOut()
   }
 
   const username = user.user_metadata?.username || user.email?.split("@")[0]

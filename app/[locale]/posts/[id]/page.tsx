@@ -14,6 +14,7 @@ import { CommentSection } from "@/components/comment-section"
 import { getPublicPost } from "@/lib/data/public-posts"
 import { normalizeLooseNestedLists } from "@/lib/markdown/normalize"
 import { interactionsEnabled } from "@/lib/features"
+import { PostViewCount } from "@/components/post-view-count"
 
 export const revalidate = 300
 export const dynamicParams = true
@@ -73,7 +74,7 @@ export default async function PostPage({ params }: Props) {
             </span>
             <span className="flex items-center gap-1">
               <Eye className="h-4 w-4" />
-              {post.view_count || 0} {t("reads")}
+              <PostViewCount postId={id} initialCount={post.view_count || 0} /> {t("reads")}
             </span>
             {interactionsEnabled && (
               <span className="flex items-center gap-1">

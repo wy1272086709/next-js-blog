@@ -10,7 +10,7 @@ import { useAuth } from "@/lib/auth-context"
 import { interactionsEnabled } from "@/lib/features"
 
 export function ClientHeader() {
-  const { user, loading, signOut } = useAuth()
+  const { user, loading } = useAuth()
   const router = useRouter()
   const t = useTranslations("Header")
 
@@ -67,7 +67,7 @@ export function ClientHeader() {
           <LanguageSwitcher />
           {interactionsEnabled &&
             (user ? (
-              <UserNav user={user} onSignOut={signOut} />
+              <UserNav user={user} />
             ) : (
               <div className="flex items-center gap-2">
                 <Button variant="ghost" asChild>
